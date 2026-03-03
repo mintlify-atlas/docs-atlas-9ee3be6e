@@ -1,0 +1,167 @@
+---
+title: "Team Contest Mode Leaderboard"
+description: "Get full rankings for teams that completed contest mode during the contest period"
+---
+
+## Endpoint
+
+<CodeGroup>
+```bash GET
+GET /leaderboard/team/contest/{raid}
+```
+</CodeGroup>
+
+Ranking of all teams which completed the official contest version of the raid during the contest period. This provides the complete contest mode leaderboard, not limited to the first 1000 completions.
+
+## Path Parameters
+
+<ParamField path="raid" type="string" required>
+  The raid identifier (path name). Examples:
+  - `deepstone`
+  - `vaultofglass`
+  - `vowofthedisciple`
+  - `kingsfail`
+  - `rootofnightmares`
+  - `crotasend`
+  - `salvationsedge`
+  
+  Only raids that had a contest mode are available. Use the `/manifest` endpoint to check `contestRaidIds`.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries to return per page. Must be between 10 and 100.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number of leaderboard data. Ignored if `search` is provided. Must be greater than 0.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search for a specific player by membershipId. Returns results centered around teams containing that player. Pattern: `^\d+n?$`
+</ParamField>
+
+## Response
+
+<ResponseField name="type" type="string">
+  Always `"team"` for this endpoint
+</ResponseField>
+
+<ResponseField name="format" type="string">
+  Always `"duration"` - values represent completion time in seconds
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of entries returned
+</ResponseField>
+
+<ResponseField name="entries" type="array">
+  Array of team leaderboard entries
+  
+  <Expandable title="Team Entry Properties">
+    <ResponseField name="position" type="integer">
+      Leaderboard position (1-indexed)
+    </ResponseField>
+    
+    <ResponseField name="rank" type="integer">
+      Rank accounting for ties
+    </ResponseField>
+    
+    <ResponseField name="value" type="number">
+      Completion time in seconds from contest start
+    </ResponseField>
+    
+    <ResponseField name="instanceId" type="string">
+      The activity instance ID
+    </ResponseField>
+    
+    <ResponseField name="players" type="array">
+      Array of PlayerInfo objects for all team members (typically 6 players)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://api.raidhub.io/leaderboard/team/contest/salvationsedge?count=10&page=1' \
+  --header 'X-API-KEY: your_api_key'
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-15T12:00:00.000Z",
+  "success": true,
+  "response": {
+    "type": "team",
+    "format": "duration",
+    "page": 1,
+    "count": 10,
+    "entries": [
+      {
+        "position": 1,
+        "rank": 1,
+        "value": 18523,
+        "instanceId": "12345678901234567",
+        "players": [
+          {
+            "membershipId": "4611686018488107374",
+            "membershipType": 3,
+            "bungieGlobalDisplayName": "ContestWinner",
+            "bungieGlobalDisplayNameCode": "1111",
+            "iconPath": "/common/destiny2_content/icons/avatar.jpg",
+            "displayName": "ContestWinner#1111",
+            "lastSeen": "2024-03-15T08:30:00.000Z",
+            "isPrivate": false,
+            "cheatLevel": 0
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Notes
+
+- Contest mode typically lasts 24-48 hours after a raid's launch
+- All teams that completed the raid during this period are ranked
+- The `value` represents time from contest start to completion
+- Only completions during the official contest window are included
+
+## Error Responses
+
+<ResponseField name="RaidNotFoundError" type="404">
+  The specified raid was not found or does not have a contest mode
+  
+  ```json
+  {
+    "minted": "2024-03-15T12:00:00.000Z",
+    "success": false,
+    "code": "RaidNotFoundError",
+    "error": {
+      "raid": "invalidraid"
+    }
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="PlayerNotOnLeaderboardError" type="404">
+  Returned when searching for a player who did not complete this raid during contest mode
+</ResponseField>
+
+<ResponseField name="PathValidationError" type="404">
+  Invalid path parameters
+</ResponseField>
+
+<ResponseField name="QueryValidationError" type="400">
+  Invalid query parameters
+</ResponseField>

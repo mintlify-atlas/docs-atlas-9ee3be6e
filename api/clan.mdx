@@ -1,0 +1,302 @@
+---
+title: 'Get Clan Statistics'
+description: 'Retrieve comprehensive statistics for a clan and its members'
+api: 'GET /clan/{groupId}'
+---
+
+Get the stats for a clan. Data updates weekly.
+
+## Path Parameters
+
+<ParamField path="groupId" type="string" required>
+  The unique identifier for the clan. This is the Bungie.net group ID.
+  
+  Example: `3148408`
+</ParamField>
+
+## Response
+
+<ResponseField name="aggregateStats" type="object" required>
+  Aggregate statistics for the entire clan
+  
+  <Expandable title="Aggregate Stats">
+    <ResponseField name="stats" type="object">
+      Clan-wide statistics
+      
+      <Expandable title="Stats">
+        <ResponseField name="clears" type="integer">
+          Total number of raid completions by all clan members
+        </ResponseField>
+        
+        <ResponseField name="averageClears" type="integer">
+          Average number of clears per clan member
+        </ResponseField>
+        
+        <ResponseField name="freshClears" type="integer">
+          Total number of fresh (full) raid completions
+        </ResponseField>
+        
+        <ResponseField name="averageFreshClears" type="integer">
+          Average number of fresh clears per clan member
+        </ResponseField>
+        
+        <ResponseField name="sherpas" type="integer">
+          Total number of sherpa runs (helping first-timers)
+        </ResponseField>
+        
+        <ResponseField name="averageSherpas" type="integer">
+          Average number of sherpas per clan member
+        </ResponseField>
+        
+        <ResponseField name="timePlayedSeconds" type="integer">
+          Total time spent in raids across all clan members (in seconds)
+        </ResponseField>
+        
+        <ResponseField name="averageTimePlayedSeconds" type="integer">
+          Average time spent in raids per clan member (in seconds)
+        </ResponseField>
+        
+        <ResponseField name="totalContestScore" type="number">
+          Total contest mode score for the clan
+        </ResponseField>
+        
+        <ResponseField name="weightedContestScore" type="number">
+          Weighted contest mode score accounting for participation
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="ranks" type="object" nullable>
+      Global leaderboard rankings for the clan (null if not ranked)
+      
+      <Expandable title="Ranks">
+        <ResponseField name="clearsRank" type="integer">
+          Clan's rank on the total clears leaderboard
+        </ResponseField>
+        
+        <ResponseField name="freshClearsRank" type="integer">
+          Clan's rank on the fresh clears leaderboard
+        </ResponseField>
+        
+        <ResponseField name="sherpasRank" type="integer">
+          Clan's rank on the sherpas leaderboard
+        </ResponseField>
+        
+        <ResponseField name="timePlayedSecondsRank" type="integer">
+          Clan's rank on the time played leaderboard
+        </ResponseField>
+        
+        <ResponseField name="totalContestScoreRank" type="integer">
+          Clan's rank on the total contest score leaderboard
+        </ResponseField>
+        
+        <ResponseField name="weightedContestScoreRank" type="integer">
+          Clan's rank on the weighted contest score leaderboard
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="members" type="array" required>
+  Array of clan members with their individual statistics
+  
+  <Expandable title="Member">
+    <ResponseField name="playerInfo" type="object" nullable>
+      Player information (null for private profiles)
+      
+      <Expandable title="Player Info">
+        <ResponseField name="membershipId" type="string">
+          Destiny membership ID (int64 format)
+        </ResponseField>
+        
+        <ResponseField name="membershipType" type="integer" nullable>
+          Platform type (1=Xbox, 2=PSN, 3=Steam, 4=Blizzard, 5=Stadia, 6=Epic)
+        </ResponseField>
+        
+        <ResponseField name="displayName" type="string" nullable>
+          Legacy platform-specific display name
+        </ResponseField>
+        
+        <ResponseField name="bungieGlobalDisplayName" type="string" nullable>
+          Bungie name (without discriminator)
+        </ResponseField>
+        
+        <ResponseField name="bungieGlobalDisplayNameCode" type="string" nullable>
+          Bungie name discriminator code
+        </ResponseField>
+        
+        <ResponseField name="iconPath" type="string" nullable>
+          Path to player's profile icon
+        </ResponseField>
+        
+        <ResponseField name="lastSeen" type="string">
+          ISO 8601 timestamp of last activity
+        </ResponseField>
+        
+        <ResponseField name="isPrivate" type="boolean">
+          Whether the player's profile is private
+        </ResponseField>
+        
+        <ResponseField name="cheatLevel" type="integer">
+          Cheat detection level (0=None, 1=Suspicious, 2=Moderate, 3=Extreme, 4=Blacklisted)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="stats" type="object">
+      Individual member statistics
+      
+      <Expandable title="Stats">
+        <ResponseField name="clears" type="integer">
+          Total number of raid completions
+        </ResponseField>
+        
+        <ResponseField name="freshClears" type="integer">
+          Number of fresh (full) raid completions
+        </ResponseField>
+        
+        <ResponseField name="sherpas" type="integer">
+          Number of sherpa runs performed
+        </ResponseField>
+        
+        <ResponseField name="totalTimePlayedSeconds" type="integer">
+          Total time spent in raids (in seconds)
+        </ResponseField>
+        
+        <ResponseField name="contestScore" type="number">
+          Contest mode score
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://api.raidhub.io/clan/3148408 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.raidhub.io/clan/3148408', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+url = "https://api.raidhub.io/clan/3148408"
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+
+response = requests.get(url, headers=headers)
+data = response.json()
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 Success
+{
+  "minted": "2026-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "aggregateStats": {
+      "stats": {
+        "clears": 15420,
+        "averageClears": 154,
+        "freshClears": 8760,
+        "averageFreshClears": 88,
+        "sherpas": 2340,
+        "averageSherpas": 23,
+        "timePlayedSeconds": 18504000,
+        "averageTimePlayedSeconds": 185040,
+        "totalContestScore": 12500.5,
+        "weightedContestScore": 8750.25
+      },
+      "ranks": {
+        "clearsRank": 42,
+        "freshClearsRank": 38,
+        "sherpasRank": 56,
+        "timePlayedSecondsRank": 45,
+        "totalContestScoreRank": 67,
+        "weightedContestScoreRank": 54
+      }
+    },
+    "members": [
+      {
+        "playerInfo": {
+          "membershipId": "4611686018488107374",
+          "membershipType": 3,
+          "displayName": "Guardian_1",
+          "bungieGlobalDisplayName": "Guardian",
+          "bungieGlobalDisplayNameCode": "1234",
+          "iconPath": "/common/destiny2_content/icons/default_avatar.jpg",
+          "lastSeen": "2026-03-03T20:15:00.000Z",
+          "isPrivate": false,
+          "cheatLevel": 0
+        },
+        "stats": {
+          "clears": 245,
+          "freshClears": 180,
+          "sherpas": 42,
+          "totalTimePlayedSeconds": 294000,
+          "contestScore": 150.5
+        }
+      },
+      {
+        "playerInfo": null,
+        "stats": {
+          "clears": 89,
+          "freshClears": 45,
+          "sherpas": 5,
+          "totalTimePlayedSeconds": 106800,
+          "contestScore": 0
+        }
+      }
+    ]
+  }
+}
+```
+
+```json 404 Clan Not Found
+{
+  "minted": "2026-03-03T23:30:00.000Z",
+  "success": false,
+  "code": "ClanNotFoundError",
+  "error": {
+    "groupId": "9999999999999"
+  }
+}
+```
+
+```json 503 Bungie Service Offline
+{
+  "minted": "2026-03-03T23:30:00.000Z",
+  "success": false,
+  "code": "BungieServiceOffline",
+  "error": {
+    "message": "Bungie API is temporarily unavailable",
+    "route": "/GroupV2/3148408/"
+  }
+}
+```
+
+</ResponseExample>
+
+## Notes
+
+- Clan statistics are updated weekly, so recent activity may not be immediately reflected
+- The `playerInfo` field will be `null` for members with private profiles
+- All time values are in seconds
+- The `cheatLevel` indicates the integrity status of a player's account
+- Rankings are only available for clans that appear on the global leaderboards

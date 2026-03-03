@@ -1,0 +1,364 @@
+---
+title: "Query Player Instances"
+api: "GET /player/{membershipId}/instances"
+description: "Find raid instances for a player with advanced filtering options"
+---
+
+Find a set of instances based on query parameters with advanced filtering capabilities. This endpoint is useful for finding specific types of completions or analyzing player performance.
+
+<Warning>
+  This endpoint **requires authentication** regardless of whether the player's profile is private.
+</Warning>
+
+## Path Parameters
+
+<ParamField path="membershipId" type="string" required>
+  The Destiny membership ID of the player (int64 format).
+</ParamField>
+
+## Query Parameters
+
+### Teammate Filters
+
+<ParamField query="membershipIds" type="string">
+  Comma-separated list of up to 6 membershipIds that must be present in the instance.
+  
+  You do not need to include the target membershipId from the path parameter in this list.
+  
+  **Example**: `4611686018467890123,4611686018467890456`
+</ParamField>
+
+### Activity Filters
+
+<ParamField query="activityId" type="integer">
+  Filter by RaidHub activity ID (e.g., 9 for Vault of Glass).
+</ParamField>
+
+<ParamField query="versionId" type="integer">
+  Filter by version ID (e.g., 1 for Normal, 2 for Master).
+</ParamField>
+
+### Completion Filters
+
+<ParamField query="completed" type="boolean">
+  Filter by completion status.
+  - `true`: Only completed runs
+  - `false`: Only incomplete runs
+</ParamField>
+
+<ParamField query="fresh" type="boolean">
+  Filter by fresh starts (started from beginning).
+  - `true`: Only fresh runs
+  - `false`: Only checkpoint runs
+</ParamField>
+
+<ParamField query="flawless" type="boolean">
+  Filter by flawless status (no deaths).
+  - `true`: Only flawless runs
+  - `false`: Only non-flawless runs
+</ParamField>
+
+### Fireteam Size Filters
+
+<ParamField query="playerCount" type="integer">
+  Exact player count (e.g., 3 for trio runs).
+</ParamField>
+
+<ParamField query="minPlayerCount" type="integer">
+  Minimum player count (inclusive).
+</ParamField>
+
+<ParamField query="maxPlayerCount" type="integer">
+  Maximum player count (inclusive).
+</ParamField>
+
+### Duration Filters
+
+<ParamField query="minDurationSeconds" type="integer">
+  Minimum duration in seconds (inclusive).
+</ParamField>
+
+<ParamField query="maxDurationSeconds" type="integer">
+  Maximum duration in seconds (inclusive).
+</ParamField>
+
+### Season Filters
+
+<ParamField query="season" type="integer">
+  Exact Destiny season number.
+</ParamField>
+
+<ParamField query="minSeason" type="integer">
+  Minimum season number (inclusive).
+</ParamField>
+
+<ParamField query="maxSeason" type="integer">
+  Maximum season number (inclusive).
+</ParamField>
+
+### Date Filters
+
+<ParamField query="minDate" type="string">
+  Minimum completion date (ISO 8601 format).
+</ParamField>
+
+<ParamField query="maxDate" type="string">
+  Maximum completion date (ISO 8601 format).
+</ParamField>
+
+## Response
+
+Returns an array of up to 100 matching instances with player information.
+
+<ResponseField name="instances" type="array">
+  Array of instances matching the query (maximum 100).
+  
+  <Expandable title="InstanceWithPlayers">
+    <ResponseField name="instanceId" type="string">
+      Unique instance identifier.
+    </ResponseField>
+    
+    <ResponseField name="hash" type="integer">
+      Bungie activity hash.
+    </ResponseField>
+    
+    <ResponseField name="completed" type="boolean">
+      Whether the instance was completed.
+    </ResponseField>
+    
+    <ResponseField name="flawless" type="boolean" nullable>
+      Flawless status.
+    </ResponseField>
+    
+    <ResponseField name="fresh" type="boolean" nullable>
+      Fresh start status.
+    </ResponseField>
+    
+    <ResponseField name="playerCount" type="integer">
+      Number of players.
+    </ResponseField>
+    
+    <ResponseField name="skullHashes" type="array">
+      Active modifier hashes.
+    </ResponseField>
+    
+    <ResponseField name="score" type="integer">
+      Final score.
+    </ResponseField>
+    
+    <ResponseField name="dateStarted" type="string">
+      Start timestamp.
+    </ResponseField>
+    
+    <ResponseField name="dateCompleted" type="string">
+      Completion timestamp.
+    </ResponseField>
+    
+    <ResponseField name="season" type="integer">
+      Destiny season.
+    </ResponseField>
+    
+    <ResponseField name="duration" type="integer">
+      Duration in seconds.
+    </ResponseField>
+    
+    <ResponseField name="platformType" type="integer">
+      Platform type (0 if mixed).
+    </ResponseField>
+    
+    <ResponseField name="activityId" type="integer">
+      RaidHub activity ID.
+    </ResponseField>
+    
+    <ResponseField name="versionId" type="integer">
+      RaidHub version ID.
+    </ResponseField>
+    
+    <ResponseField name="isDayOne" type="boolean">
+      Day one completion.
+    </ResponseField>
+    
+    <ResponseField name="isContest" type="boolean">
+      Contest mode completion.
+    </ResponseField>
+    
+    <ResponseField name="isWeekOne" type="boolean">
+      Week one completion.
+    </ResponseField>
+    
+    <ResponseField name="isBlacklisted" type="boolean">
+      Blacklisted from leaderboards.
+    </ResponseField>
+    
+    <ResponseField name="players" type="array">
+      Array of players in the instance.
+      
+      <Expandable title="PlayerInfo">
+        <ResponseField name="membershipId" type="string">
+          Player's membership ID.
+        </ResponseField>
+        
+        <ResponseField name="bungieGlobalDisplayName" type="string" nullable>
+          Bungie name.
+        </ResponseField>
+        
+        <ResponseField name="bungieGlobalDisplayNameCode" type="string" nullable>
+          Bungie name code.
+        </ResponseField>
+        
+        <ResponseField name="membershipType" type="integer" nullable>
+          Platform type.
+        </ResponseField>
+        
+        <ResponseField name="iconPath" type="string" nullable>
+          Icon path.
+        </ResponseField>
+        
+        <ResponseField name="lastSeen" type="string">
+          Last seen timestamp.
+        </ResponseField>
+        
+        <ResponseField name="isPrivate" type="boolean">
+          Private profile status.
+        </ResponseField>
+        
+        <ResponseField name="cheatLevel" type="integer">
+          Cheat detection level.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Requests
+
+### Find Solo Flawless Runs
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/instances?playerCount=1&flawless=true&completed=true" \
+  -H "X-API-Key: your_api_key_here" \
+  -H "Authorization: Bearer your_token_here"
+```
+
+### Find Runs with Specific Teammates
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/instances?membershipIds=4611686018467890123,4611686018467890456" \
+  -H "X-API-Key: your_api_key_here" \
+  -H "Authorization: Bearer your_token_here"
+```
+
+### Find Fast Vault of Glass Clears
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/instances?activityId=9&completed=true&maxDurationSeconds=1800" \
+  -H "X-API-Key: your_api_key_here" \
+  -H "Authorization: Bearer your_token_here"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": true,
+  "response": [
+    {
+      "instanceId": "12345678901234567",
+      "hash": 3881495763,
+      "completed": true,
+      "flawless": true,
+      "fresh": true,
+      "playerCount": 1,
+      "skullHashes": [],
+      "score": 0,
+      "dateStarted": "2021-05-01T18:00:00.000Z",
+      "dateCompleted": "2021-05-01T20:15:00.000Z",
+      "season": 14,
+      "duration": 8100,
+      "platformType": 3,
+      "activityId": 9,
+      "versionId": 1,
+      "isDayOne": false,
+      "isContest": false,
+      "isWeekOne": false,
+      "isBlacklisted": false,
+      "players": [
+        {
+          "membershipId": "4611686018488107374",
+          "membershipType": 3,
+          "iconPath": "/common/destiny2_content/icons/93844c8b76ea80683a880479e3506980.jpg",
+          "displayName": "xx_newo_xx",
+          "bungieGlobalDisplayName": "Newo",
+          "bungieGlobalDisplayNameCode": "9010",
+          "lastSeen": "2021-05-01T00:00:00.000Z",
+          "isPrivate": false,
+          "cheatLevel": 0
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Error Responses
+
+### PlayerNotFoundError (404)
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerNotFoundError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+### PlayerProtectedResourceError (403)
+
+Returned when you don't have permission to query the player's instances.
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerProtectedResourceError",
+  "error": {
+    "message": "You do not have permission to query on this player's instances",
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+## Filter Combinations
+
+<Warning>
+  Some parameter combinations may conflict. For example, specifying a season outside the range of min/max season will return no results.
+</Warning>
+
+### Common Query Patterns
+
+- **Low-man clears**: `completed=true&maxPlayerCount=3`
+- **Solo runs**: `playerCount=1`
+- **Trio flawless**: `playerCount=3&flawless=true`
+- **Fast clears**: `completed=true&maxDurationSeconds=3600`
+- **Recent activity**: `minDate=2026-01-01T00:00:00.000Z`
+- **Fireteam runs**: `membershipIds=player1,player2,player3`
+
+## Limits and Performance
+
+- Maximum 100 instances returned per request
+- Maximum 6 membershipIds in the teammate filter
+- No pagination available - refine filters to get different results
+- Authentication required for all requests
+- Results are not cached to ensure data freshness
+
+## Use Cases
+
+- **Achievement verification**: Confirm solo flawless or low-man completions
+- **Fireteam history**: Find runs with specific groups
+- **Speed run analysis**: Track fastest completion times
+- **Challenge tracking**: Filter for specific modifiers or conditions
+- **Seasonal analysis**: Compare performance across different seasons

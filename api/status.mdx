@@ -1,0 +1,151 @@
+---
+title: 'Get Status'
+description: 'Get the status of the RaidHub services including Atlas and Floodgates PGCR crawlers'
+---
+
+## Overview
+
+Returns the current operational status of RaidHub's internal services:
+- **Atlas**: The PGCR (Post-Game Carnage Report) crawler that processes historical activities
+- **Floodgates**: The queue system for redacted PGCRs from Bungie, primarily during contest mode
+
+## Endpoint
+
+```
+GET /status
+```
+
+## Response
+
+<ResponseField name="AtlasPGCR" type="object" required>
+  Status information for the Atlas PGCR crawler
+  
+  <Expandable title="properties">
+    <ResponseField name="status" type="string" required>
+      Current status of Atlas. One of: `Crawling`, `Idle`, `Offline`
+      - `Crawling`: Active and processing PGCRs
+      - `Idle`: Destiny API is offline, Atlas is waiting
+      - `Offline`: Atlas service is not running
+    </ResponseField>
+    
+    <ResponseField name="medianSecondsBehindNow" type="number">
+      Median lag in seconds behind current time. `null` if Atlas is offline.
+    </ResponseField>
+    
+    <ResponseField name="estimatedCatchUpTimestamp" type="string">
+      ISO 8601 timestamp when Atlas is estimated to catch up to real-time. `null` if not applicable.
+    </ResponseField>
+    
+    <ResponseField name="latestResolvedInstance" type="object">
+      Information about the most recently processed instance
+      
+      <Expandable title="properties">
+        <ResponseField name="instanceId" type="string" required>
+          The instance ID (int64 as string)
+        </ResponseField>
+        
+        <ResponseField name="dateCompleted" type="string" required>
+          When the activity was completed (ISO 8601)
+        </ResponseField>
+        
+        <ResponseField name="dateResolved" type="string" required>
+          When RaidHub processed the activity (ISO 8601)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="FloodgatesPGCR" type="object" required>
+  Status information for the Floodgates queue system
+  
+  <Expandable title="properties">
+    <ResponseField name="status" type="string" required>
+      Current status of Floodgates. One of: `Empty`, `Blocked`, `Crawling`, `Live`
+      - `Empty`: No activities in queue
+      - `Blocked`: Queue has items but processing is stalled
+      - `Crawling`: Processing a large backlog
+      - `Live`: Processing in real-time as activities complete
+    </ResponseField>
+    
+    <ResponseField name="incomingRate" type="number" required>
+      Rate of incoming PGCRs per second
+    </ResponseField>
+    
+    <ResponseField name="resolveRate" type="number" required>
+      Rate of PGCR resolution per second
+    </ResponseField>
+    
+    <ResponseField name="backlog" type="integer" required>
+      Number of PGCRs waiting to be processed
+    </ResponseField>
+    
+    <ResponseField name="latestResolvedInstance" type="object">
+      Information about the most recently unblocked instance (same structure as AtlasPGCR)
+    </ResponseField>
+    
+    <ResponseField name="estimatedBacklogEmptied" type="string">
+      ISO 8601 timestamp when backlog is estimated to be empty. `null` if not applicable.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "AtlasPGCR": {
+      "status": "Crawling",
+      "medianSecondsBehindNow": 45.5,
+      "estimatedCatchUpTimestamp": "2024-03-03T23:45:00.000Z",
+      "latestResolvedInstance": {
+        "instanceId": "12345678901234567",
+        "dateCompleted": "2024-03-03T23:29:00.000Z",
+        "dateResolved": "2024-03-03T23:29:30.000Z"
+      }
+    },
+    "FloodgatesPGCR": {
+      "status": "Live",
+      "incomingRate": 1.5,
+      "resolveRate": 2.0,
+      "backlog": 12,
+      "latestResolvedInstance": {
+        "instanceId": "12345678901234568",
+        "dateCompleted": "2024-03-03T23:29:45.000Z",
+        "dateResolved": "2024-03-03T23:29:50.000Z"
+      },
+      "estimatedBacklogEmptied": "2024-03-03T23:30:30.000Z"
+    }
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="503" type="object">
+  Service Unavailable - An internal service is unavailable
+  
+  <Expandable title="properties">
+    <ResponseField name="serviceName" type="string" required>
+      Name of the unavailable service
+    </ResponseField>
+    
+    <ResponseField name="message" type="string" required>
+      Error message
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Caching
+
+This endpoint is cached for **10 seconds**. The status is debounced with a 60-second grace period to prevent rapid status changes.
+
+## Use Cases
+
+- Monitor RaidHub service health
+- Determine data freshness for your application
+- Display status information to users
+- Estimate when recent activities will be available

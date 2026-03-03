@@ -1,0 +1,534 @@
+---
+title: Instance and PGCR Data
+description: Learn how to retrieve detailed information about raid instances and Post Game Carnage Reports (PGCRs)
+---
+
+## Overview
+
+Every raid activity in Destiny 2 generates a unique **instance** identified by an instance ID. RaidHub tracks these instances and provides detailed information including player performance, completion status, modifiers, and more.
+
+## What is an Instance?
+
+An **instance** represents a single playthrough of a raid activity. Each instance has:
+
+- A unique **instance ID** (64-bit integer)
+- Completion status and timing information
+- Player roster and individual statistics
+- Activity modifiers and skull hashes
+- Scoring and ranking information
+
+### What is a PGCR?
+
+A **PGCR** (Post Game Carnage Report) is the raw data from Bungie's API containing detailed statistics about an activity. RaidHub stores compressed PGCRs and provides two ways to access instance data:
+
+1. **Instance Extended** (`/instance/{instanceId}`) - RaidHub's formatted view with additional metadata
+2. **Raw PGCR** (`/pgcr/{instanceId}`) - Bungie's original PGCR data
+
+## Getting Instance Details
+
+Use the `/instance/{instanceId}` endpoint to get comprehensive instance information.
+
+### Basic Instance Request
+
+<CodeGroup>
+```bash cURL
+curl "https://api.raid.report/v2/instance/12345678901234567"
+```
+
+```javascript JavaScript
+const instanceId = '12345678901234567';
+const response = await fetch(
+  `https://api.raid.report/v2/instance/${instanceId}`
+);
+const instance = await response.json();
+
+console.log('Activity:', instance.metadata.activityName);
+console.log('Completed:', instance.completed);
+console.log('Duration:', `${Math.floor(instance.duration / 60)} minutes`);
+console.log('Players:', instance.players.length);
+```
+
+```python Python
+import requests
+
+instance_id = '12345678901234567'
+response = requests.get(
+    f'https://api.raid.report/v2/instance/{instance_id}'
+)
+instance = response.json()
+
+print('Activity:', instance['metadata']['activityName'])
+print('Completed:', instance['completed'])
+print('Duration:', f"{instance['duration'] // 60} minutes")
+print('Players:', len(instance['players']))
+```
+</CodeGroup>
+
+## Instance Properties
+
+### Core Instance Data
+
+<ResponseField name="instanceId" type="string">
+  Unique identifier for the instance
+</ResponseField>
+
+<ResponseField name="hash" type="integer">
+  Activity version hash
+</ResponseField>
+
+<ResponseField name="activityId" type="integer">
+  Activity definition ID
+</ResponseField>
+
+<ResponseField name="versionId" type="integer">
+  Version definition ID
+</ResponseField>
+
+<ResponseField name="completed" type="boolean">
+  Whether the activity was completed
+</ResponseField>
+
+<ResponseField name="playerCount" type="integer">
+  Number of players in the instance
+</ResponseField>
+
+<ResponseField name="score" type="integer">
+  Total score (for scored activities)
+</ResponseField>
+
+### Special Completion Flags
+
+<ResponseField name="fresh" type="boolean">
+  Whether this was a fresh clear (no encounter checkpoints used)
+</ResponseField>
+
+<ResponseField name="flawless" type="boolean">
+  Whether the run was flawless (no player deaths)
+</ResponseField>
+
+<ResponseField name="isDayOne" type="boolean">
+  Whether completed during the Day One period (typically first 24 hours)
+</ResponseField>
+
+<ResponseField name="isContest" type="boolean">
+  Whether completed during contest mode period
+</ResponseField>
+
+<ResponseField name="isWeekOne" type="boolean">
+  Whether completed during the first week
+</ResponseField>
+
+<ResponseField name="isBlacklisted" type="boolean">
+  Whether the instance has been flagged/blacklisted
+</ResponseField>
+
+### Timing Information
+
+<ResponseField name="dateStarted" type="string">
+  ISO 8601 timestamp when the activity started
+</ResponseField>
+
+<ResponseField name="dateCompleted" type="string">
+  ISO 8601 timestamp when the activity completed
+</ResponseField>
+
+<ResponseField name="duration" type="integer">
+  Total duration in seconds
+</ResponseField>
+
+<ResponseField name="season" type="integer">
+  Destiny 2 season ID when the activity occurred
+</ResponseField>
+
+### Additional Instance Data
+
+<ResponseField name="platformType" type="integer">
+  Platform where the activity occurred (1=Xbox, 2=PSN, 3=Steam, etc.)
+</ResponseField>
+
+<ResponseField name="skullHashes" type="array">
+  Array of modifier hashes applied to the activity
+</ResponseField>
+
+<ResponseField name="leaderboardRank" type="integer | null">
+  The instance's rank on relevant leaderboards (if applicable)
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Activity metadata including `activityName`, `versionName`, and `isRaid`
+</ResponseField>
+
+## Understanding Instance Players
+
+Each instance includes detailed player information in the `players` array.
+
+### Player Data Structure
+
+```json
+{
+  "completed": true,
+  "isFirstClear": false,
+  "sherpas": 42,
+  "timePlayedSeconds": 3245,
+  "playerInfo": {
+    "membershipId": "4611686018484930134",
+    "membershipType": 3,
+    "displayName": "PlayerName",
+    "bungieGlobalDisplayName": "PlayerName",
+    "bungieGlobalDisplayNameCode": 1234
+  },
+  "characters": [
+    {
+      "characterId": "2305843009504575107",
+      "classHash": 2271682572,
+      "emblemHash": 1234567890,
+      "completed": true,
+      "timePlayedSeconds": 3245,
+      "startSeconds": 0,
+      "score": 0,
+      "kills": 234,
+      "assists": 45,
+      "deaths": 3,
+      "precisionKills": 123,
+      "superKills": 12,
+      "grenadeKills": 23,
+      "meleeKills": 8,
+      "weapons": [
+        {
+          "weaponHash": 1234567890,
+          "kills": 67,
+          "precisionKills": 45
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Player Fields
+
+<ResponseField name="completed" type="boolean">
+  Whether the player completed the activity
+</ResponseField>
+
+<ResponseField name="isFirstClear" type="boolean">
+  Whether this was the player's first clear of this activity
+</ResponseField>
+
+<ResponseField name="sherpas" type="integer">
+  Number of sherpa runs this player has across all activities
+</ResponseField>
+
+<ResponseField name="timePlayedSeconds" type="integer">
+  Total time the player spent in the activity
+</ResponseField>
+
+<ResponseField name="characters" type="array">
+  Array of characters the player used (players can switch characters mid-raid)
+</ResponseField>
+
+### Character Statistics
+
+Each character entry includes combat statistics:
+
+- **Performance**: kills, assists, deaths, precision kills
+- **Ability usage**: super kills, grenade kills, melee kills
+- **Weapons**: detailed weapon statistics with kills and precision kills
+- **Class info**: class hash and emblem hash
+- **Timing**: time played on this specific character
+
+## Getting Raw PGCRs
+
+Use the `/pgcr/{instanceId}` endpoint to get the raw Post Game Carnage Report from Bungie's API.
+
+### Raw PGCR Request
+
+<CodeGroup>
+```bash cURL
+curl "https://api.raid.report/v2/pgcr/12345678901234567"
+```
+
+```javascript JavaScript
+const instanceId = '12345678901234567';
+const response = await fetch(
+  `https://api.raid.report/v2/pgcr/${instanceId}`
+);
+const pgcr = await response.json();
+
+console.log('Activity Details:', pgcr.activityDetails);
+console.log('Entries:', pgcr.entries.length);
+```
+
+```python Python
+response = requests.get(
+    f'https://api.raid.report/v2/pgcr/{instance_id}'
+)
+pgcr = response.json()
+
+print('Activity Details:', pgcr['activityDetails'])
+print('Entries:', len(pgcr['entries']))
+```
+</CodeGroup>
+
+### PGCR vs Instance Extended
+
+<Tabs>
+  <Tab title="Instance Extended">
+    **Use `/instance/{instanceId}` when you want:**
+    
+    - RaidHub's formatted data structure
+    - Additional metadata (activity names, leaderboard ranks)
+    - Simplified player and character data
+    - Fresh/flawless/day-one flags
+    - Better integration with other RaidHub endpoints
+    
+    **Cache Duration**: 5 minutes (300 seconds)
+  </Tab>
+  
+  <Tab title="Raw PGCR">
+    **Use `/pgcr/{instanceId}` when you want:**
+    
+    - Raw Bungie API data format
+    - Access when Bungie's API is down
+    - Maximum detail from original PGCR
+    - Compatibility with Bungie API tools
+    - Minimal RaidHub processing
+    
+    **Cache Duration**: 24 hours (86400 seconds)
+  </Tab>
+</Tabs>
+
+<Note>
+The PGCR endpoint is useful as a fallback when Bungie's API is experiencing issues, since RaidHub caches all PGCRs.
+</Note>
+
+## Common Use Cases
+
+### Analyzing a Raid Completion
+
+<Steps>
+  <Step title="Get the instance data">
+    Fetch the instance using `/instance/{instanceId}`
+  </Step>
+  
+  <Step title="Check completion flags">
+    Examine `completed`, `fresh`, `flawless` to determine completion type
+  </Step>
+  
+  <Step title="Analyze performance">
+    Look at duration, player stats, and weapon usage
+  </Step>
+  
+  <Step title="Display results">
+    Show activity name, completion time, and player roster
+  </Step>
+</Steps>
+
+### Finding Flawless Runs
+
+```javascript
+// Check if an instance was flawless
+const response = await fetch(
+  `https://api.raid.report/v2/instance/${instanceId}`
+);
+const instance = await response.json();
+
+if (instance.flawless && instance.completed) {
+  console.log('Flawless completion!');
+  console.log(`Completed in ${Math.floor(instance.duration / 60)} minutes`);
+  
+  // Show all players who participated
+  instance.players.forEach(player => {
+    console.log(`- ${player.playerInfo.displayName}`);
+  });
+}
+```
+
+### Examining Player Performance
+
+```javascript
+const response = await fetch(
+  `https://api.raid.report/v2/instance/${instanceId}`
+);
+const instance = await response.json();
+
+// Analyze each player's combat stats
+instance.players.forEach(player => {
+  const totalKills = player.characters.reduce(
+    (sum, char) => sum + char.kills, 0
+  );
+  const totalDeaths = player.characters.reduce(
+    (sum, char) => sum + char.deaths, 0
+  );
+  const kd = totalDeaths > 0 ? (totalKills / totalDeaths).toFixed(2) : totalKills;
+  
+  console.log(`${player.playerInfo.displayName}: ${totalKills} kills, ${totalDeaths} deaths (${kd} K/D)`);
+});
+```
+
+### Checking Activity Modifiers
+
+```javascript
+const response = await fetch(
+  `https://api.raid.report/v2/instance/${instanceId}`
+);
+const instance = await response.json();
+
+if (instance.skullHashes && instance.skullHashes.length > 0) {
+  console.log('Active modifiers:', instance.skullHashes);
+  // You can look up these hashes in the Destiny 2 manifest
+  // to get the actual modifier names
+}
+```
+
+### Finding Day One Completions
+
+```javascript
+const response = await fetch(
+  `https://api.raid.report/v2/instance/${instanceId}`
+);
+const instance = await response.json();
+
+if (instance.isDayOne) {
+  console.log('Day One completion!');
+  console.log('Completed at:', new Date(instance.dateCompleted));
+  
+  if (instance.leaderboardRank) {
+    console.log('World rank:', instance.leaderboardRank);
+  }
+}
+```
+
+### Analyzing Weapon Usage
+
+```javascript
+const response = await fetch(
+  `https://api.raid.report/v2/instance/${instanceId}`
+);
+const instance = await response.json();
+
+// Aggregate weapon kills across all players
+const weaponStats = new Map();
+
+instance.players.forEach(player => {
+  player.characters.forEach(char => {
+    char.weapons.forEach(weapon => {
+      const current = weaponStats.get(weapon.weaponHash) || { kills: 0, precisionKills: 0 };
+      weaponStats.set(weapon.weaponHash, {
+        kills: current.kills + weapon.kills,
+        precisionKills: current.precisionKills + weapon.precisionKills
+      });
+    });
+  });
+});
+
+// Find most used weapons
+const sortedWeapons = [...weaponStats.entries()]
+  .sort((a, b) => b[1].kills - a[1].kills)
+  .slice(0, 5);
+
+console.log('Top 5 weapons by kills:');
+sortedWeapons.forEach(([hash, stats]) => {
+  console.log(`Weapon ${hash}: ${stats.kills} kills (${stats.precisionKills} precision)`);
+});
+```
+
+## Instance from Player History
+
+Instance IDs can be obtained from a player's activity history:
+
+```javascript
+// Get player's recent activities
+const historyResponse = await fetch(
+  `https://api.raid.report/v2/player/${membershipId}/history?count=10`
+);
+const history = await historyResponse.json();
+
+// Get details for the most recent activity
+const latestInstanceId = history.activities[0].instanceId;
+const instanceResponse = await fetch(
+  `https://api.raid.report/v2/instance/${latestInstanceId}`
+);
+const instanceDetails = await instanceResponse.json();
+
+console.log('Latest activity:', instanceDetails.metadata.activityName);
+console.log('Completed:', instanceDetails.completed);
+```
+
+## Error Handling
+
+### Common Errors
+
+<ResponseField name="404 - InstanceNotFoundError" type="error">
+  The specified instance ID does not exist in the RaidHub database
+</ResponseField>
+
+<ResponseField name="404 - PGCRNotFoundError" type="error">
+  The PGCR data for this instance is not available
+</ResponseField>
+
+### Example Error Response
+
+```json
+{
+  "error": true,
+  "code": "InstanceNotFoundError",
+  "message": "Instance not found",
+  "instanceId": "12345678901234567"
+}
+```
+
+<Note>
+Not all instances have complete data. Older instances or those from private activities may have limited information.
+</Note>
+
+## Understanding Character Switching
+
+Players can switch characters during a raid. The `characters` array tracks each character used:
+
+```javascript
+const player = instance.players[0];
+
+if (player.characters.length > 1) {
+  console.log(`${player.playerInfo.displayName} switched characters:`);
+  player.characters.forEach((char, index) => {
+    console.log(`Character ${index + 1}: ${char.timePlayedSeconds}s playtime`);
+  });
+}
+```
+
+Characters are ordered by:
+1. Completion status (completed characters first)
+2. Time played (most time played first)
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Cache Instance Data" icon="database">
+    Instance data rarely changes. Cache responses for 5+ minutes.
+  </Card>
+  
+  <Card title="Use Instance Extended" icon="star">
+    Prefer `/instance` over `/pgcr` for better metadata and formatting
+  </Card>
+  
+  <Card title="Handle Missing Data" icon="circle-exclamation">
+    Some fields may be null or empty, especially for older instances
+  </Card>
+  
+  <Card title="Check Blacklist Status" icon="flag">
+    The `isBlacklisted` flag indicates suspicious or invalid completions
+  </Card>
+</CardGroup>
+
+## Related Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Player History" icon="clock-rotate-left" href="/guides/player-data#player-activity-history">
+    Get a player's activity history to find instance IDs
+  </Card>
+  
+  <Card title="Leaderboards" icon="trophy" href="/guides/leaderboards">
+    Find top instances on contest and speed leaderboards
+  </Card>
+</CardGroup>

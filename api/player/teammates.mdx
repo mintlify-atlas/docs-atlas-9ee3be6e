@@ -1,0 +1,193 @@
+---
+title: "Get Player Teammates"
+api: "GET /player/{membershipId}/teammates"
+description: "Get a list of a player's top 100 most frequent raid teammates"
+---
+
+Get a list of a player's top 100 teammates ranked by estimated time played together in raids.
+
+<Warning>
+  This endpoint requires authentication if the player has a private profile.
+</Warning>
+
+## Path Parameters
+
+<ParamField path="membershipId" type="string" required>
+  The Destiny membership ID of the player (int64 format).
+</ParamField>
+
+## Response
+
+Returns an array of teammate objects, sorted by estimated time played together (descending).
+
+<ResponseField name="teammates" type="array">
+  Array of up to 100 teammates.
+  
+  <Expandable title="Teammate">
+    <ResponseField name="estimatedTimePlayedSeconds" type="integer">
+      Estimated time played together in raids (seconds).
+    </ResponseField>
+    
+    <ResponseField name="clears" type="integer">
+      Number of raids cleared together.
+    </ResponseField>
+    
+    <ResponseField name="instanceCount" type="integer">
+      Number of raid instances played together (includes incomplete runs).
+    </ResponseField>
+    
+    <ResponseField name="playerInfo" type="object">
+      Basic information about the teammate.
+      
+      <Expandable title="PlayerInfo">
+        <ResponseField name="membershipId" type="string">
+          Destiny membership ID of the teammate.
+        </ResponseField>
+        
+        <ResponseField name="membershipType" type="integer" nullable>
+          Platform the account was created on.
+        </ResponseField>
+        
+        <ResponseField name="iconPath" type="string" nullable>
+          Path to the player's icon on Bungie's CDN.
+        </ResponseField>
+        
+        <ResponseField name="displayName" type="string" nullable>
+          Platform-specific display name.
+        </ResponseField>
+        
+        <ResponseField name="bungieGlobalDisplayName" type="string" nullable>
+          Bungie global display name.
+        </ResponseField>
+        
+        <ResponseField name="bungieGlobalDisplayNameCode" type="string" nullable>
+          Bungie name code.
+        </ResponseField>
+        
+        <ResponseField name="lastSeen" type="string">
+          Last seen timestamp (ISO 8601).
+        </ResponseField>
+        
+        <ResponseField name="isPrivate" type="boolean">
+          Whether the teammate's profile is private.
+        </ResponseField>
+        
+        <ResponseField name="cheatLevel" type="integer">
+          Cheat detection level (0-4).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/teammates" \
+  -H "X-API-Key: your_api_key_here"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": true,
+  "response": [
+    {
+      "estimatedTimePlayedSeconds": 125000,
+      "clears": 85,
+      "instanceCount": 92,
+      "playerInfo": {
+        "membershipId": "4611686018467890123",
+        "membershipType": 3,
+        "iconPath": "/common/destiny2_content/icons/abc123.jpg",
+        "displayName": "teammate_username",
+        "bungieGlobalDisplayName": "Teammate",
+        "bungieGlobalDisplayNameCode": "1234",
+        "lastSeen": "2026-03-01T20:00:00.000Z",
+        "isPrivate": false,
+        "cheatLevel": 0
+      }
+    },
+    {
+      "estimatedTimePlayedSeconds": 98000,
+      "clears": 62,
+      "instanceCount": 70,
+      "playerInfo": {
+        "membershipId": "4611686018467890456",
+        "membershipType": 2,
+        "iconPath": "/common/destiny2_content/icons/def456.jpg",
+        "displayName": "another_player",
+        "bungieGlobalDisplayName": "AnotherPlayer",
+        "bungieGlobalDisplayNameCode": "5678",
+        "lastSeen": "2026-02-28T15:30:00.000Z",
+        "isPrivate": false,
+        "cheatLevel": 0
+      }
+    }
+  ]
+}
+```
+
+## Error Responses
+
+### PlayerNotFoundError (404)
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerNotFoundError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+### PlayerPrivateProfileError (403)
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerPrivateProfileError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+## Understanding the Data
+
+### Estimated Time Played
+
+The `estimatedTimePlayedSeconds` is calculated based on the duration of instances where both players were present. This is an estimate because:
+- Players may join at different times
+- Players may leave before completion
+- The calculation uses instance duration as a proxy
+
+### Clears vs Instance Count
+
+- **clears**: Raids that were completed with both players present
+- **instanceCount**: Total number of raid attempts together (includes incomplete runs)
+
+The difference between these values can indicate:
+- Failed attempts
+- Checkpoint completions
+- Partial participation
+
+## Use Cases
+
+- **Fireteam analysis**: Identify frequent raid partners
+- **Clan insights**: Understand player relationships and groups
+- **Social graphs**: Build social network visualizations
+- **Sherpa tracking**: Find players who regularly help others
+- **Team formation**: Suggest compatible teammates
+
+## Performance Notes
+
+- Cached for 10 minutes (600 seconds)
+- Always returns top 100 teammates (no pagination)
+- Sorted by estimated time played together (descending)
+- Requires authentication for private profiles

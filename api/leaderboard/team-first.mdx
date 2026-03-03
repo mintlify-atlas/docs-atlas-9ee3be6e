@@ -1,0 +1,183 @@
+---
+title: "Team First Clears Leaderboard"
+description: "Get rankings for the first 1000 completions of each activity version"
+---
+
+## Endpoint
+
+<CodeGroup>
+```bash GET
+GET /leaderboard/team/first/{activity}/{version}
+```
+</CodeGroup>
+
+Ranking of the first 1000 completions of each activity version. This endpoint is useful for tracking world-first races and early completions.
+
+<Note>
+For full contest mode rankings (not limited to first 1000), use the `/leaderboard/team/contest/{raid}` endpoint instead.
+</Note>
+
+## Path Parameters
+
+<ParamField path="activity" type="string" required>
+  The activity identifier (path name). Examples:
+  - `vaultofglass`
+  - `deepstone`
+  - `kingsfail`
+  - `rootofnightmares`
+  - `salvationsedge`
+  
+  Use the `/manifest` endpoint to get all available activity paths.
+</ParamField>
+
+<ParamField path="version" type="string" required>
+  The version identifier for the activity. Examples:
+  - `normal` - Standard difficulty
+  - `master` - Master difficulty
+  - `contest` - Contest mode
+  
+  Not all activities have all versions. Use `/manifest` to see valid activity-version combinations.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries to return per page. Must be between 10 and 100.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number of leaderboard data. Ignored if `search` is provided. Must be greater than 0.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search for a specific player by membershipId. Returns results centered around teams containing that player. Pattern: `^\d+n?$`
+</ParamField>
+
+## Response
+
+<ResponseField name="type" type="string">
+  Always `"team"` for this endpoint
+</ResponseField>
+
+<ResponseField name="format" type="string">
+  Always `"duration"` - values represent completion time in seconds
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of entries returned
+</ResponseField>
+
+<ResponseField name="entries" type="array">
+  Array of team leaderboard entries
+  
+  <Expandable title="Team Entry Properties">
+    <ResponseField name="position" type="integer">
+      Leaderboard position (1-indexed)
+    </ResponseField>
+    
+    <ResponseField name="rank" type="integer">
+      Rank accounting for ties
+    </ResponseField>
+    
+    <ResponseField name="value" type="number">
+      Completion time in seconds
+    </ResponseField>
+    
+    <ResponseField name="instanceId" type="string">
+      The activity instance ID
+    </ResponseField>
+    
+    <ResponseField name="players" type="array">
+      Array of PlayerInfo objects for all team members
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://api.raidhub.io/leaderboard/team/first/salvationsedge/contest?count=10&page=1' \
+  --header 'X-API-KEY: your_api_key'
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-15T12:00:00.000Z",
+  "success": true,
+  "response": {
+    "type": "team",
+    "format": "duration",
+    "page": 1,
+    "count": 10,
+    "entries": [
+      {
+        "position": 1,
+        "rank": 1,
+        "value": 18523,
+        "instanceId": "12345678901234567",
+        "players": [
+          {
+            "membershipId": "4611686018488107374",
+            "membershipType": 3,
+            "bungieGlobalDisplayName": "WorldFirst1",
+            "bungieGlobalDisplayNameCode": "0001",
+            "iconPath": "/common/destiny2_content/icons/avatar1.jpg",
+            "displayName": "WorldFirst1#0001",
+            "lastSeen": "2024-03-15T11:00:00.000Z",
+            "isPrivate": false,
+            "cheatLevel": 0
+          },
+          {
+            "membershipId": "4611686018488107375",
+            "membershipType": 3,
+            "bungieGlobalDisplayName": "WorldFirst2",
+            "bungieGlobalDisplayNameCode": "0002",
+            "iconPath": "/common/destiny2_content/icons/avatar2.jpg",
+            "displayName": "WorldFirst2#0002",
+            "lastSeen": "2024-03-15T11:00:00.000Z",
+            "isPrivate": false,
+            "cheatLevel": 0
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="InvalidActivityVersionComboError" type="400">
+  The activity and version combination is invalid
+  
+  ```json
+  {
+    "minted": "2024-03-15T12:00:00.000Z",
+    "success": false,
+    "code": "InvalidActivityVersionComboError",
+    "error": {
+      "activity": "vaultofglass",
+      "version": "contest"
+    }
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="PlayerNotOnLeaderboardError" type="404">
+  Returned when searching for a player who is not on this leaderboard
+</ResponseField>
+
+<ResponseField name="PathValidationError" type="404">
+  Invalid path parameters
+</ResponseField>
+
+<ResponseField name="QueryValidationError" type="400">
+  Invalid query parameters
+</ResponseField>

@@ -1,0 +1,374 @@
+---
+title: Error Handling
+description: Complete guide to error codes, HTTP status codes, and error handling best practices
+---
+
+The RaidHub API uses a consistent error response format across all endpoints. Every error response includes an error code that identifies the specific type of error, along with relevant error details.
+
+## Error Response Format
+
+All error responses follow the standard [RaidHubResponse](/concepts/response-format) format:
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "ErrorCodeHere",
+  "error": {
+    // Error-specific details
+  }
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes to indicate the general category of error:
+
+| HTTP Status | Usage |
+|-------------|-------|
+| `200` | Successful request |
+| `400` | Bad request (validation errors) |
+| `401` | Unauthorized (invalid or missing API key) |
+| `403` | Forbidden (insufficient permissions or private profile) |
+| `404` | Not found (resource doesn't exist) |
+| `500` | Internal server error |
+| `503` | Service unavailable (Bungie.net offline or system maintenance) |
+
+## Error Codes
+
+### Authentication Errors
+
+#### ApiKeyError
+
+**HTTP Status:** `401`
+
+Returned when the API key is missing or invalid.
+
+<ResponseField name="message" type="string" required>
+  Either `"Invalid API Key"` or `"Missing API Key"`
+</ResponseField>
+
+<ResponseField name="apiKey" type="string | null" required>
+  The API key that was provided (or null if missing)
+</ResponseField>
+
+<ResponseField name="origin" type="string | null" required>
+  The origin header from the request
+</ResponseField>
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "ApiKeyError",
+  "error": {
+    "message": "Invalid API Key",
+    "apiKey": "invalid-key-12345",
+    "origin": "https://example.com"
+  }
+}
+```
+
+#### InsufficientPermissionsError
+
+**HTTP Status:** `403`
+
+Returned when attempting to access a protected resource without proper authorization (typically admin endpoints).
+
+<ResponseField name="message" type="string" required>
+  Always `"Forbidden"`
+</ResponseField>
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "InsufficientPermissionsError",
+  "error": {
+    "message": "Forbidden"
+  }
+}
+```
+
+#### InvalidClientSecretError
+
+**HTTP Status:** `403`
+
+Returned when the OAuth client secret is invalid.
+
+### Validation Errors
+
+#### PathValidationError
+
+**HTTP Status:** `404`
+
+Returned when path parameters fail validation (e.g., invalid membership ID format).
+
+<ResponseField name="issues" type="array" required>
+  Array of Zod validation issues describing what failed validation
+</ResponseField>
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "PathValidationError",
+  "error": {
+    "issues": [
+      {
+        "code": "invalid_type",
+        "message": "Expected string, received number",
+        "path": ["membershipId"]
+      }
+    ]
+  }
+}
+```
+
+#### QueryValidationError
+
+**HTTP Status:** `400`
+
+Returned when query parameters fail validation.
+
+<ResponseField name="issues" type="array" required>
+  Array of Zod validation issues describing what failed validation
+</ResponseField>
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "QueryValidationError",
+  "error": {
+    "issues": [
+      {
+        "code": "too_small",
+        "message": "Number must be greater than or equal to 1",
+        "path": ["page"]
+      }
+    ]
+  }
+}
+```
+
+#### BodyValidationError
+
+**HTTP Status:** `400`
+
+Returned when the request body fails validation.
+
+<ResponseField name="issues" type="array" required>
+  Array of Zod validation issues describing what failed validation
+</ResponseField>
+
+### Resource Not Found Errors
+
+These errors indicate that the requested resource does not exist in the RaidHub database.
+
+**HTTP Status:** `404`
+
+- **PlayerNotFoundError** - The specified player membership ID was not found
+- **InstanceNotFoundError** - The specified raid instance ID was not found
+- **PGCRNotFoundError** - Post-Game Carnage Report not found for the specified instance
+- **PlayerNotOnLeaderboardError** - The player is not ranked on the specified leaderboard
+- **PlayerNotInInstance** - The player did not participate in the specified instance
+- **RaidNotFoundError** - The specified raid activity ID was not found
+- **PantheonVersionNotFoundError** - The specified Pantheon version was not found
+- **ClanNotFoundError** - The specified clan group ID was not found
+- **InvalidActivityVersionComboError** - The combination of activity and version is invalid
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "PlayerNotFoundError",
+  "error": {
+    "message": "Player not found"
+  }
+}
+```
+
+### Privacy Errors
+
+#### PlayerPrivateProfileError
+
+**HTTP Status:** `403`
+
+Returned when attempting to access profile data for a player who has set their profile to private on Bungie.net.
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "PlayerPrivateProfileError",
+  "error": {
+    "message": "This player's profile is private"
+  }
+}
+```
+
+#### PlayerProtectedResourceError
+
+**HTTP Status:** `403`
+
+Returned when attempting to access a protected resource (like activity history) for a player without proper authorization.
+
+### Server Errors
+
+#### InternalServerError
+
+**HTTP Status:** `500`
+
+Returned when an unexpected error occurs on the RaidHub server.
+
+<ResponseField name="message" type="string" required>
+  Error message (detailed in development, generic in production)
+</ResponseField>
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "InternalServerError",
+  "error": {
+    "message": "Internal Server Error"
+  }
+}
+```
+
+#### ServiceUnavailableError
+
+**HTTP Status:** `503`
+
+Returned when the RaidHub service is temporarily unavailable.
+
+#### BungieServiceOffline
+
+**HTTP Status:** `503`
+
+Returned when Bungie.net services are offline and the requested data cannot be retrieved.
+
+```json
+{
+  "minted": "2024-03-15T14:32:18.000Z",
+  "success": false,
+  "code": "BungieServiceOffline",
+  "error": {
+    "message": "Bungie.net services are currently offline"
+  }
+}
+```
+
+### Other Errors
+
+#### AdminQuerySyntaxError
+
+**HTTP Status:** `400`
+
+Returned when an admin query has invalid syntax (admin endpoints only).
+
+## Best Practices
+
+### 1. Check the Success Field
+
+Always check the `success` field to determine if the request succeeded:
+
+```typescript
+if (response.success) {
+  // Handle successful response
+  processData(response.response);
+} else {
+  // Handle error
+  handleError(response.code, response.error);
+}
+```
+
+### 2. Handle Specific Error Codes
+
+Implement specific handling for common error scenarios:
+
+```typescript
+function handleError(code: string, error: any) {
+  switch (code) {
+    case 'PlayerNotFoundError':
+      showMessage('Player not found. Please check the membership ID.');
+      break;
+    case 'PlayerPrivateProfileError':
+      showMessage('This player\'s profile is private.');
+      break;
+    case 'ApiKeyError':
+      showMessage('Authentication failed. Please check your API key.');
+      break;
+    case 'BungieServiceOffline':
+      showMessage('Bungie.net is currently offline. Please try again later.');
+      break;
+    default:
+      showMessage('An error occurred. Please try again.');
+  }
+}
+```
+
+### 3. Use HTTP Status Codes
+
+Rely on HTTP status codes for broad error categorization:
+
+```typescript
+if (httpStatus === 404) {
+  // Resource not found - show appropriate UI
+} else if (httpStatus === 403) {
+  // Access denied - check permissions
+} else if (httpStatus >= 500) {
+  // Server error - retry with exponential backoff
+}
+```
+
+### 4. Implement Retry Logic
+
+For `503` errors and `InternalServerError`, implement retry logic with exponential backoff:
+
+```typescript
+async function fetchWithRetry(url: string, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success) {
+      return data;
+    }
+    
+    if (data.code === 'InternalServerError' || 
+        data.code === 'ServiceUnavailableError' ||
+        data.code === 'BungieServiceOffline') {
+      const delay = Math.pow(2, i) * 1000; // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, delay));
+      continue;
+    }
+    
+    // Don't retry other error types
+    throw new Error(`API Error: ${data.code}`);
+  }
+}
+```
+
+<Warning>
+Do not retry `401`, `403`, or `404` errors, as these indicate client errors that will not resolve with retries.
+</Warning>
+
+### 5. Log Error Details
+
+Log error responses for debugging, but be careful not to log sensitive information:
+
+```typescript
+if (!response.success) {
+  console.error('API Error:', {
+    code: response.code,
+    minted: response.minted,
+    // Log error details carefully
+  });
+}
+```
+
+<Note>
+The `minted` timestamp in error responses can help with debugging by showing exactly when the error occurred on the server.
+</Note>

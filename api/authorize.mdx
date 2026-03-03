@@ -1,0 +1,210 @@
+---
+title: 'Authorization'
+description: 'Obtain JWT tokens for user and admin authentication'
+---
+
+## Overview
+
+RaidHub uses JWT (JSON Web Token) authentication for protected endpoints. There are two authorization endpoints:
+- **User Authorization**: For regular users accessing their own protected resources
+- **Admin Authorization**: For administrators accessing admin-only endpoints
+
+Both endpoints exchange a client secret for a JWT token that must be included in subsequent API requests.
+
+---
+
+## User Authorization
+
+Authenticate a user and receive a JWT token for accessing user-specific protected resources.
+
+### Endpoint
+
+```
+POST /authorize/user
+```
+
+### Request Body
+
+<ParamField body="bungieMembershipId" type="string" required>
+  The user's Bungie.net membership ID (as a digit string)
+</ParamField>
+
+<ParamField body="destinyMembershipIds" type="array" required>
+  Array of Destiny membership IDs associated with this user (int64 as strings)
+</ParamField>
+
+<ParamField body="clientSecret" type="string" required>
+  Client secret for user authentication. This should be obtained through your OAuth flow with Bungie.net.
+</ParamField>
+
+### Response
+
+<ResponseField name="value" type="string" required>
+  JWT token to use for authenticated requests
+</ResponseField>
+
+<ResponseField name="expires" type="string" required>
+  ISO 8601 timestamp when the token expires (30 days from issue)
+</ResponseField>
+
+### Example Request
+
+```json
+{
+  "bungieMembershipId": "12345678",
+  "destinyMembershipIds": [
+    "4611686018488107374",
+    "4611686018488107375"
+  ],
+  "clientSecret": "your-client-secret-here"
+}
+```
+
+### Example Response
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires": "2024-04-02T23:30:00.000Z"
+  }
+}
+```
+
+### Token Expiry
+
+User tokens expire after **30 days** (2,592,000 seconds).
+
+---
+
+## Admin Authorization
+
+Authorize an admin user and receive a JWT token for accessing admin-only endpoints.
+
+### Endpoint
+
+```
+POST /authorize/admin
+```
+
+### Request Body
+
+<ParamField body="bungieMembershipId" type="string" required>
+  The admin user's Bungie.net membership ID (as a digit string)
+</ParamField>
+
+<ParamField body="adminClientSecret" type="string" required>
+  Admin client secret. This is a different secret from the user client secret and should be kept highly confidential.
+</ParamField>
+
+### Response
+
+<ResponseField name="value" type="string" required>
+  JWT token to use for admin-authenticated requests
+</ResponseField>
+
+<ResponseField name="expires" type="string" required>
+  ISO 8601 timestamp when the token expires (1 hour from issue)
+</ResponseField>
+
+### Example Request
+
+```json
+{
+  "bungieMembershipId": "12345678",
+  "adminClientSecret": "your-admin-secret-here"
+}
+```
+
+### Example Response
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires": "2024-03-04T00:30:00.000Z"
+  }
+}
+```
+
+### Token Expiry
+
+Admin tokens expire after **1 hour** (3,600 seconds) for security purposes.
+
+---
+
+## Using JWT Tokens
+
+Include the JWT token in the `Authorization` header of subsequent requests:
+
+```bash
+curl -X GET https://api.raidhub.io/protected/endpoint \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+## Error Responses
+
+Both endpoints return the same error for invalid credentials:
+
+<ResponseField name="403" type="object">
+  Invalid Client Secret Error - The provided client secret is incorrect
+  
+  <Expandable title="properties">
+    <ResponseField name="code" type="string" required>
+      `InvalidClientSecretError`
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Error
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": false,
+  "code": "InvalidClientSecretError",
+  "error": {}
+}
+```
+
+## Security Considerations
+
+<Warning>
+  **Never expose client secrets in client-side code or public repositories.**
+</Warning>
+
+- **User secrets** should be obtained through a secure OAuth flow with Bungie.net
+- **Admin secrets** should only be used in secure backend services
+- Tokens should be stored securely and transmitted only over HTTPS
+- Implement token refresh logic before expiry to maintain authenticated sessions
+
+## Token Claims
+
+The JWT token contains the following claims:
+
+- `bungieMembershipId`: The Bungie.net membership ID
+- `isAdmin`: Boolean indicating admin status
+- `destinyMembershipIds`: Array of Destiny membership IDs (user tokens only)
+- `iat`: Issued at timestamp
+- `exp`: Expiration timestamp
+
+## Integration Flow
+
+### User Flow
+
+1. User authenticates with Bungie.net via OAuth
+2. Your backend exchanges OAuth token for RaidHub client secret
+3. Call `/authorize/user` with client secret to obtain JWT
+4. Use JWT for subsequent API requests
+5. Refresh token before 30-day expiry
+
+### Admin Flow
+
+1. Securely store admin client secret in environment variables
+2. Call `/authorize/admin` to obtain short-lived JWT
+3. Use JWT for admin operations
+4. Obtain new token every hour

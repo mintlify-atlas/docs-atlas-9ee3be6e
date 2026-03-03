@@ -1,0 +1,159 @@
+---
+title: "Individual Raid Leaderboard"
+description: "Get individual leaderboards for a specific raid"
+---
+
+## Endpoint
+
+<CodeGroup>
+```bash GET
+GET /leaderboard/individual/raid/{raid}/{category}
+```
+</CodeGroup>
+
+Individual leaderboards for a specific raid. Returns rankings for players based on their performance in a particular raid activity.
+
+## Path Parameters
+
+<ParamField path="raid" type="string" required>
+  The raid identifier (path name). Examples:
+  - `vaultofglass`
+  - `deepstone`
+  - `kingsfail`
+  - `rootofnightmares`
+  - `salvationsedge`
+  - `crotasend`
+  
+  Use the `/manifest` endpoint to get all available raid paths.
+</ParamField>
+
+<ParamField path="category" type="string" required>
+  The leaderboard category to retrieve. Must be one of:
+  - `clears` - Total completions of this raid
+  - `freshClears` - Total fresh (full) completions
+  - `sherpas` - Total sherpa runs for this raid
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries to return per page. Must be between 10 and 100.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number of leaderboard data. Ignored if `search` is provided. Must be greater than 0.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search for a specific player by membershipId. Returns results centered around that player's position. Pattern: `^\d+n?$`
+</ParamField>
+
+## Response
+
+<ResponseField name="type" type="string">
+  Always `"individual"` for this endpoint
+</ResponseField>
+
+<ResponseField name="format" type="string">
+  Always `"numerical"` for raid-specific leaderboards
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of entries returned
+</ResponseField>
+
+<ResponseField name="entries" type="array">
+  Array of individual leaderboard entries
+  
+  <Expandable title="Entry Properties">
+    <ResponseField name="position" type="integer">
+      Leaderboard position (1-indexed)
+    </ResponseField>
+    
+    <ResponseField name="rank" type="integer">
+      Rank accounting for ties
+    </ResponseField>
+    
+    <ResponseField name="value" type="number">
+      The metric value (number of clears, fresh clears, or sherpas)
+    </ResponseField>
+    
+    <ResponseField name="playerInfo" type="object">
+      Player information (see PlayerInfo schema)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://api.raidhub.io/leaderboard/individual/raid/salvationsedge/clears?count=10&page=1' \
+  --header 'X-API-KEY: your_api_key'
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-15T12:00:00.000Z",
+  "success": true,
+  "response": {
+    "type": "individual",
+    "format": "numerical",
+    "page": 1,
+    "count": 10,
+    "entries": [
+      {
+        "position": 1,
+        "rank": 1,
+        "value": 156,
+        "playerInfo": {
+          "membershipId": "4611686018488107374",
+          "membershipType": 3,
+          "bungieGlobalDisplayName": "RaidMaster",
+          "bungieGlobalDisplayNameCode": "5678",
+          "iconPath": "/common/destiny2_content/icons/avatar.jpg",
+          "displayName": "RaidMaster#5678",
+          "lastSeen": "2024-03-15T11:30:00.000Z",
+          "isPrivate": false,
+          "cheatLevel": 0
+        }
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="RaidNotFoundError" type="404">
+  The specified raid was not found
+  
+  ```json
+  {
+    "minted": "2024-03-15T12:00:00.000Z",
+    "success": false,
+    "code": "RaidNotFoundError",
+    "error": {
+      "raid": "invalidraid"
+    }
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="PlayerNotOnLeaderboardError" type="404">
+  Returned when searching for a player who is not on this raid's leaderboard
+</ResponseField>
+
+<ResponseField name="PathValidationError" type="404">
+  Invalid path parameters
+</ResponseField>
+
+<ResponseField name="QueryValidationError" type="400">
+  Invalid query parameters
+</ResponseField>

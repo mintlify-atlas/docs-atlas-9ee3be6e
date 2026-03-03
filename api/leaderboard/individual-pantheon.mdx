@@ -1,0 +1,157 @@
+---
+title: "Individual Pantheon Leaderboard"
+description: "Get individual leaderboards for specific Pantheon versions"
+---
+
+## Endpoint
+
+<CodeGroup>
+```bash GET
+GET /leaderboard/individual/pantheon/{version}/{category}
+```
+</CodeGroup>
+
+Individual leaderboards for a specific Pantheon version. Pantheon is a special rotating raid challenge mode.
+
+## Path Parameters
+
+<ParamField path="version" type="string" required>
+  The Pantheon version identifier. Examples:
+  - `atraks`
+  - `oryx`
+  - `rhulk`
+  - `nezarec`
+  
+  Use the `/manifest` endpoint to get all available Pantheon version paths.
+</ParamField>
+
+<ParamField path="category" type="string" required>
+  The leaderboard category to retrieve. Must be one of:
+  - `clears` - Total completions of this Pantheon version
+  - `freshClears` - Total fresh completions
+  - `score` - Highest score achieved
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries to return per page. Must be between 10 and 100.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number of leaderboard data. Ignored if `search` is provided. Must be greater than 0.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search for a specific player by membershipId. Returns results centered around that player's position. Pattern: `^\d+n?$`
+</ParamField>
+
+## Response
+
+<ResponseField name="type" type="string">
+  Always `"individual"` for this endpoint
+</ResponseField>
+
+<ResponseField name="format" type="string">
+  Always `"numerical"` for Pantheon leaderboards
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  Current page number
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of entries returned
+</ResponseField>
+
+<ResponseField name="entries" type="array">
+  Array of individual leaderboard entries
+  
+  <Expandable title="Entry Properties">
+    <ResponseField name="position" type="integer">
+      Leaderboard position (1-indexed)
+    </ResponseField>
+    
+    <ResponseField name="rank" type="integer">
+      Rank accounting for ties
+    </ResponseField>
+    
+    <ResponseField name="value" type="number">
+      The metric value (clears, fresh clears, or score)
+    </ResponseField>
+    
+    <ResponseField name="playerInfo" type="object">
+      Player information (see PlayerInfo schema)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://api.raidhub.io/leaderboard/individual/pantheon/oryx/score?count=10&page=1' \
+  --header 'X-API-KEY: your_api_key'
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-15T12:00:00.000Z",
+  "success": true,
+  "response": {
+    "type": "individual",
+    "format": "numerical",
+    "page": 1,
+    "count": 10,
+    "entries": [
+      {
+        "position": 1,
+        "rank": 1,
+        "value": 285000,
+        "playerInfo": {
+          "membershipId": "4611686018488107374",
+          "membershipType": 3,
+          "bungieGlobalDisplayName": "PantheonChamp",
+          "bungieGlobalDisplayNameCode": "9999",
+          "iconPath": "/common/destiny2_content/icons/avatar.jpg",
+          "displayName": "PantheonChamp#9999",
+          "lastSeen": "2024-03-15T10:00:00.000Z",
+          "isPrivate": false,
+          "cheatLevel": 0
+        }
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="PantheonVersionNotFoundError" type="404">
+  The specified Pantheon version was not found
+  
+  ```json
+  {
+    "minted": "2024-03-15T12:00:00.000Z",
+    "success": false,
+    "code": "PantheonVersionNotFoundError",
+    "error": {
+      "path": "invalidversion"
+    }
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="PlayerNotOnLeaderboardError" type="404">
+  Returned when searching for a player who is not on this Pantheon leaderboard
+</ResponseField>
+
+<ResponseField name="PathValidationError" type="404">
+  Invalid path parameters
+</ResponseField>
+
+<ResponseField name="QueryValidationError" type="400">
+  Invalid query parameters
+</ResponseField>

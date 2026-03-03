@@ -1,0 +1,198 @@
+---
+title: "Clan Leaderboard"
+description: "Get clan rankings based on aggregate raid statistics"
+---
+
+## Endpoint
+
+<CodeGroup>
+```bash GET
+GET /leaderboard/clan
+```
+</CodeGroup>
+
+Get a page of the clan leaderboard based on various aggregate statistics. Clans are ranked by their collective raid performance across all members.
+
+## Query Parameters
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries to return per page. Must be between 10 and 100.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number of leaderboard data. Must be greater than 0.
+</ParamField>
+
+<ParamField query="column" type="string" default="weighted_contest_score">
+  The metric to sort by. Available columns:
+  - `clears` - Total raid completions by all members
+  - `average_clears` - Average clears per member
+  - `fresh_clears` - Total fresh raid completions
+  - `average_fresh_clears` - Average fresh clears per member
+  - `sherpas` - Total sherpa runs
+  - `average_sherpas` - Average sherpas per member
+  - `time_played_seconds` - Total time in raids
+  - `average_time_played_seconds` - Average time per member
+  - `total_contest_score` - Sum of all contest scores
+  - `weighted_contest_score` - Weighted contest performance (default)
+</ParamField>
+
+## Response
+
+Returns an array of clan leaderboard entries.
+
+<ResponseField name="entries" type="array">
+  <Expandable title="Clan Entry Properties">
+    <ResponseField name="clan" type="object">
+      Clan information
+      
+      <Expandable title="Clan Properties">
+        <ResponseField name="groupId" type="string">
+          Bungie.net clan group ID
+        </ResponseField>
+        
+        <ResponseField name="name" type="string">
+          Clan name
+        </ResponseField>
+        
+        <ResponseField name="callSign" type="string">
+          Clan tag/call sign (4 characters)
+        </ResponseField>
+        
+        <ResponseField name="motto" type="string">
+          Clan motto
+        </ResponseField>
+        
+        <ResponseField name="clanBannerData" type="object">
+          Clan banner customization data
+        </ResponseField>
+        
+        <ResponseField name="lastUpdated" type="string">
+          ISO 8601 timestamp of last data update
+        </ResponseField>
+        
+        <ResponseField name="knownMemberCount" type="integer">
+          Number of members tracked by RaidHub
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="clears" type="integer">
+      Total raid completions
+    </ResponseField>
+    
+    <ResponseField name="averageClears" type="integer">
+      Average clears per member
+    </ResponseField>
+    
+    <ResponseField name="freshClears" type="integer">
+      Total fresh raid completions
+    </ResponseField>
+    
+    <ResponseField name="averageFreshClears" type="integer">
+      Average fresh clears per member
+    </ResponseField>
+    
+    <ResponseField name="sherpas" type="integer">
+      Total sherpa runs
+    </ResponseField>
+    
+    <ResponseField name="averageSherpas" type="integer">
+      Average sherpas per member
+    </ResponseField>
+    
+    <ResponseField name="timePlayedSeconds" type="integer">
+      Total time spent in raids (seconds)
+    </ResponseField>
+    
+    <ResponseField name="averageTimePlayedSeconds" type="integer">
+      Average time per member (seconds)
+    </ResponseField>
+    
+    <ResponseField name="totalContestScore" type="number">
+      Sum of all contest mode scores
+    </ResponseField>
+    
+    <ResponseField name="weightedContestScore" type="number">
+      Weighted contest performance score
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl --request GET \
+  --url 'https://api.raidhub.io/leaderboard/clan?column=weighted_contest_score&count=10&page=1' \
+  --header 'X-API-KEY: your_api_key'
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-15T12:00:00.000Z",
+  "success": true,
+  "response": [
+    {
+      "clan": {
+        "groupId": "123456",
+        "name": "Elite Raiders",
+        "callSign": "ELIT",
+        "motto": "Conquer every challenge",
+        "clanBannerData": {
+          "decalId": 4,
+          "decalColorId": 3,
+          "decalBackgroundColorId": 0,
+          "gonfalonId": 2,
+          "gonfalonColorId": 3,
+          "gonfalonDetailId": 1,
+          "gonfalonDetailColorId": 0
+        },
+        "lastUpdated": "2024-03-15T11:00:00.000Z",
+        "knownMemberCount": 95
+      },
+      "clears": 45230,
+      "averageClears": 476,
+      "freshClears": 28450,
+      "averageFreshClears": 299,
+      "sherpas": 12340,
+      "averageSherpas": 129,
+      "timePlayedSeconds": 18923400,
+      "averageTimePlayedSeconds": 199193,
+      "totalContestScore": 2847563.2,
+      "weightedContestScore": 1523.8
+    }
+  ]
+}
+```
+
+## Notes
+
+- The weighted contest score is calculated using a proprietary algorithm that accounts for team size and consistency
+- Only clans with at least one tracked member appear on the leaderboard
+- Statistics are aggregated across all raid activities
+- Member counts reflect only members who have participated in raids tracked by RaidHub
+
+## Error Responses
+
+<ResponseField name="QueryValidationError" type="400">
+  Invalid query parameters
+  
+  ```json
+  {
+    "minted": "2024-03-15T12:00:00.000Z",
+    "success": false,
+    "code": "QueryValidationError",
+    "error": {
+      "issues": [
+        {
+          "code": "invalid_enum_value",
+          "path": ["column"],
+          "message": "Invalid column name"
+        }
+      ]
+    }
+  }
+  ```
+</ResponseField>

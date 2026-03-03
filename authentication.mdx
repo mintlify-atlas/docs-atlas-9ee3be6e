@@ -1,0 +1,138 @@
+---
+title: "Authentication"
+description: "How to authenticate your requests to the RaidHub API"
+---
+
+## API Key Authentication
+
+The RaidHub API uses API key authentication to control access and prevent abuse. API keys are passed via the `x-api-key` header in your requests.
+
+## Development vs Production
+
+The API behaves differently based on where requests originate:
+
+<Tabs>
+  <Tab title="Development">
+    **Requests from `localhost` do not require an API key.**
+
+    When developing locally, the API automatically allows requests without authentication. This makes it easy to get started and test the API during development.
+
+    ```bash
+    # No API key needed for localhost
+    curl https://api.raidhub.io/status
+    ```
+
+    <Note>
+      In development mode, the API sets `Access-Control-Allow-Origin: *` to allow requests from any local origin.
+    </Note>
+  </Tab>
+  <Tab title="Production">
+    **Production requests require a valid API key.**
+
+    For production deployments, you must include your API key in the `x-api-key` header:
+
+    ```bash
+    curl https://api.raidhub.io/status \
+      -H "x-api-key: your_api_key_here"
+    ```
+
+    <Warning>
+      Without a valid API key, production requests will receive a `401 Unauthorized` error.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## How It Works
+
+The authentication flow is handled by the API's verification middleware (/home/daytona/workspace/source/src/auth/api-keys.ts:95):
+
+1. **Development bypass**: If the API is not in production mode (`!process.env.PROD`), all requests are allowed with unrestricted CORS
+2. **API key validation**: In production, the middleware validates the `x-api-key` header against registered keys
+3. **Origin validation**: Each API key is associated with allowed origins for CORS security
+4. **CORS configuration**: If valid, the `Access-Control-Allow-Origin` header is set to your request origin
+
+## CORS and Origin Validation
+
+API keys can be configured with origin restrictions to prevent unauthorized use:
+
+- **Wildcard (`*`)**: The key can be used from any origin
+- **Specific origins**: The key is restricted to specific domains using regex patterns
+- **Origin header required**: For origin-restricted keys, requests must include a valid `Origin` header
+
+<Note>
+  When you request an API key, provide the origin(s) where your application will run (e.g., `https://yourdomain.com`).
+</Note>
+
+## Error Responses
+
+### Missing API Key
+
+If you don't include an API key in production:
+
+```json
+{
+  "code": "ApiKeyError",
+  "minted": "2026-03-03T12:00:00.000Z",
+  "success": false,
+  "error": {
+    "message": "Missing API Key",
+    "origin": "https://yourdomain.com",
+    "apiKey": null
+  }
+}
+```
+
+### Invalid API Key
+
+If your API key is invalid or not authorized for the request origin:
+
+```json
+{
+  "code": "ApiKeyError",
+  "minted": "2026-03-03T12:00:00.000Z",
+  "success": false,
+  "error": {
+    "message": "Invalid API Key",
+    "origin": "https://yourdomain.com",
+    "apiKey": "your_invalid_key"
+  }
+}
+```
+
+Both errors return a `401 Unauthorized` status code.
+
+## Best Practices
+
+<Steps>
+  <Step title="Secure your API key">
+    Never expose your API key in client-side code, public repositories, or version control systems. Use environment variables or secure configuration management.
+  </Step>
+  <Step title="Use origin restrictions">
+    Request origin-specific API keys rather than wildcard keys to prevent unauthorized use if your key is compromised.
+  </Step>
+  <Step title="Server-side requests">
+    For web applications, make API requests from your backend server rather than directly from the browser to keep your API key secure.
+  </Step>
+  <Step title="Monitor usage">
+    Keep track of your API usage and watch for unexpected patterns that might indicate your key has been compromised.
+  </Step>
+</Steps>
+
+## Getting an API Key
+
+To request an API key for production use:
+
+1. Join the [RaidHub Discord](https://discord.gg/raidhub)
+2. Navigate to the developer channel
+3. Provide the following information:
+   - Your application name and description
+   - The origin(s) where your application will run
+   - Expected usage patterns
+
+<Card
+  title="View Authentication Implementation"
+  icon="code"
+  href="https://github.com/Raid-Hub/API/blob/main/src/auth/api-keys.ts"
+>
+  See the complete authentication implementation on GitHub.
+</Card>

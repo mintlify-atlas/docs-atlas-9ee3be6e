@@ -1,0 +1,174 @@
+---
+title: "Search for Players"
+api: "GET /player/search"
+description: "Search for players in the RaidHub database by Bungie name or platform display name"
+---
+
+Search for players in the RaidHub database by Bungie name or platform display name. Players who have not attempted a raid may not appear in the search results. Results are ordered by a combination of the number of raid completions and last played date.
+
+## Query Parameters
+
+<ParamField query="query" type="string" required>
+  The search query string. Minimum 1 character, maximum 40 characters.
+</ParamField>
+
+<ParamField query="count" type="integer" default="20">
+  Number of results to return. Minimum 1, maximum 50.
+</ParamField>
+
+<ParamField query="membershipType" type="integer" default="-1">
+  Filter by Destiny membership type. Defaults to -1 (all platforms).
+  
+  The membership type of an account is determined by the platform the account was first created on.
+  
+  **Valid values:**
+  - `-1`: All platforms
+  - `1`: Xbox
+  - `2`: PlayStation
+  - `3`: Steam
+  - `4`: Blizzard (deprecated)
+  - `5`: Stadia (deprecated)
+  - `6`: Epic Games Store
+</ParamField>
+
+<ParamField query="global" type="boolean" default="true">
+  Search by Bungie global name. Set to `false` to search by platform-specific display name instead.
+</ParamField>
+
+## Response
+
+<ResponseField name="params" type="object">
+  Search parameters used in the query.
+  
+  <Expandable title="params">
+    <ResponseField name="count" type="integer">
+      Number of results requested.
+    </ResponseField>
+    
+    <ResponseField name="query" type="string">
+      The normalized search term used.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="results" type="array">
+  Array of player information objects matching the search query.
+  
+  <Expandable title="PlayerInfo">
+    <ResponseField name="membershipId" type="string">
+      Destiny membership ID (int64 format).
+    </ResponseField>
+    
+    <ResponseField name="membershipType" type="integer" nullable>
+      The platform on which the player created their account.
+    </ResponseField>
+    
+    <ResponseField name="iconPath" type="string" nullable>
+      Path to the player's icon on Bungie's CDN.
+    </ResponseField>
+    
+    <ResponseField name="displayName" type="string" nullable>
+      Platform-specific display name. No longer shown in-game.
+    </ResponseField>
+    
+    <ResponseField name="bungieGlobalDisplayName" type="string" nullable>
+      Bungie global display name (the part before the #).
+    </ResponseField>
+    
+    <ResponseField name="bungieGlobalDisplayNameCode" type="string" nullable>
+      Bungie name code (the part after the #).
+    </ResponseField>
+    
+    <ResponseField name="lastSeen" type="string">
+      ISO 8601 timestamp of when the player was last seen in a raid.
+    </ResponseField>
+    
+    <ResponseField name="isPrivate" type="boolean">
+      Whether the player has chosen to hide their profile on Bungie.net.
+    </ResponseField>
+    
+    <ResponseField name="cheatLevel" type="integer">
+      The level of cheating detected on the account.
+      
+      **Values:**
+      - `0`: None
+      - `1`: Suspicious
+      - `2`: Moderate
+      - `3`: Extreme
+      - `4`: Blacklisted
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET "https://api.raidhub.io/player/search?query=Newo&count=10" \
+  -H "X-API-Key: your_api_key_here"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": true,
+  "response": {
+    "params": {
+      "count": 10,
+      "query": "Newo"
+    },
+    "results": [
+      {
+        "membershipId": "4611686018488107374",
+        "membershipType": 3,
+        "iconPath": "/common/destiny2_content/icons/93844c8b76ea80683a880479e3506980.jpg",
+        "displayName": "xx_newo_xx",
+        "bungieGlobalDisplayName": "Newo",
+        "bungieGlobalDisplayNameCode": "9010",
+        "lastSeen": "2021-05-01T00:00:00.000Z",
+        "isPrivate": false,
+        "cheatLevel": 0
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="QueryValidationError" type="object">
+  Returned when query parameters are invalid.
+  
+  <Expandable title="error">
+    <ResponseField name="issues" type="array">
+      Array of validation issues with the query parameters.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Error Response
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "QueryValidationError",
+  "error": {
+    "issues": [
+      {
+        "code": "too_small",
+        "message": "String must contain at least 1 character(s)",
+        "path": ["query"]
+      }
+    ]
+  }
+}
+```
+
+## Use Cases
+
+- **Player lookup**: Search for players by their Bungie name or legacy platform name
+- **Autocomplete**: Implement search-as-you-type functionality
+- **Player verification**: Confirm a player exists in the RaidHub database before fetching detailed stats
+- **Multi-platform search**: Find players across all Destiny 2 platforms

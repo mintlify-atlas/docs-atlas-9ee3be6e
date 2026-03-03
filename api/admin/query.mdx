@@ -1,0 +1,205 @@
+---
+title: 'Admin Query'
+description: 'Execute database queries and analyze query performance'
+---
+
+<Warning>
+  This is an **administrator-only** endpoint. Requires admin authentication.
+</Warning>
+
+## Overview
+
+Allows administrators to run SELECT queries against the RaidHub database or explain query execution plans. Includes automatic cost analysis to prevent expensive queries from running.
+
+## Endpoint
+
+```
+POST /admin/query
+```
+
+## Authentication
+
+Requires admin JWT token obtained from `/authorize/admin`.
+
+## Request Body
+
+<ParamField body="query" type="string" required>
+  The SQL query to execute. Must be a SELECT statement.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Type of query execution. One of:
+  - `SELECT`: Execute the query and return results
+  - `EXPLAIN`: Return the query execution plan without executing
+</ParamField>
+
+<ParamField body="ignoreCost" type="boolean" default="false">
+  Skip cost analysis and execute the query regardless of estimated cost. Use with caution.
+</ParamField>
+
+## Response
+
+The response structure varies based on the query type and cost:
+
+### SELECT Response (Low Cost)
+
+<ResponseField name="type" type="string" required>
+  `SELECT`
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Array of result rows (limited to 50 rows). Each row is an object with column names as keys.
+</ResponseField>
+
+### SELECT Response (High Cost)
+
+Returned when estimated query cost exceeds 1,000,000 and `ignoreCost` is false:
+
+<ResponseField name="type" type="string" required>
+  `HIGH COST`
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always null for high cost queries
+</ResponseField>
+
+<ResponseField name="cost" type="number" required>
+  Estimated query cost from PostgreSQL query planner
+</ResponseField>
+
+<ResponseField name="estimatedDuration" type="number" required>
+  Estimated query duration in seconds
+</ResponseField>
+
+### EXPLAIN Response
+
+<ResponseField name="type" type="string" required>
+  `EXPLAIN`
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Array of query plan lines as strings
+</ResponseField>
+
+## Example Requests
+
+### Execute a Query
+
+```json
+{
+  "query": "SELECT instance_id, date_completed FROM instance WHERE completed = true LIMIT 10",
+  "type": "SELECT",
+  "ignoreCost": false
+}
+```
+
+### Explain Query Execution
+
+```json
+{
+  "query": "SELECT COUNT(*) FROM player WHERE last_seen > NOW() - INTERVAL '7 days'",
+  "type": "EXPLAIN"
+}
+```
+
+## Example Responses
+
+### Successful SELECT
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "type": "SELECT",
+    "data": [
+      {
+        "instance_id": "12345678901234567",
+        "date_completed": "2024-03-01T15:30:00.000Z"
+      },
+      {
+        "instance_id": "12345678901234568",
+        "date_completed": "2024-03-01T16:45:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### High Cost Warning
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "type": "HIGH COST",
+    "data": null,
+    "cost": 2500000,
+    "estimatedDuration": 25.0
+  }
+}
+```
+
+### Explain Plan
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "type": "EXPLAIN",
+    "data": [
+      "Aggregate  (cost=1234.56..1234.57 rows=1 width=8)",
+      "  ->  Seq Scan on player  (cost=0.00..1200.00 rows=9824 width=0)",
+      "        Filter: (last_seen > (now() - '7 days'::interval))"
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="501" type="object">
+  Admin Query Syntax Error - Invalid SQL syntax or database error
+  
+  <Expandable title="properties">
+    <ResponseField name="name" type="string" required>
+      Error name from PostgreSQL
+    </ResponseField>
+    
+    <ResponseField name="code" type="string">
+      PostgreSQL error code
+    </ResponseField>
+    
+    <ResponseField name="line" type="string">
+      Line number where error occurred
+    </ResponseField>
+    
+    <ResponseField name="position" type="integer">
+      Character position where error occurred
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="403" type="object">
+  Insufficient Permissions - Not authorized as admin
+</ResponseField>
+
+## Safety Features
+
+- **Result Limit**: All queries are automatically wrapped to limit results to 50 rows
+- **Cost Analysis**: Queries with estimated cost > 1,000,000 require `ignoreCost: true`
+- **Read-Only**: Only SELECT and EXPLAIN queries are supported
+- **Semicolon Stripping**: Trailing semicolons are removed to prevent injection
+
+## Caching
+
+This endpoint is cached for **5 seconds**.
+
+## Use Cases
+
+- Debug data issues
+- Analyze query performance
+- Extract custom reports
+- Investigate leaderboard calculations

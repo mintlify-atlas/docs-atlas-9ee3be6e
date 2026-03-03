@@ -1,0 +1,192 @@
+---
+title: "Get Weapon Metrics"
+api: "GET /metrics/weapons/rolling-week"
+description: "Get the top weapons in each slot over the past 168 hours (7 days)"
+---
+
+## Overview
+
+This endpoint returns weapon usage statistics for the past week, organized by weapon slot (kinetic, energy, and power). Track which weapons are most popular based on usage frequency or total kills.
+
+## Query Parameters
+
+<ParamField query="sort" type="string" default="usage">
+  Sort weapons by metric type
+  - `usage` - Sort by total number of times equipped
+  - `kills` - Sort by total kill count
+</ParamField>
+
+<ParamField query="count" type="number" default="25">
+  The number of weapons to return per slot. Maximum value is 100.
+</ParamField>
+
+## Response
+
+The response contains three arrays, one for each weapon slot, with the top weapons sorted by the specified metric.
+
+<ResponseField name="kinetic" type="array">
+  Array of weapon metrics for kinetic slot weapons
+  
+  <Expandable title="WeaponMetric">
+    <ResponseField name="hash" type="integer" required>
+      Destiny 2 weapon hash identifier (uint32)
+    </ResponseField>
+    
+    <ResponseField name="totalUsage" type="integer" required>
+      Total number of times this weapon was equipped across all activities in the past 7 days
+    </ResponseField>
+    
+    <ResponseField name="totalKills" type="integer" required>
+      Total number of kills with this weapon in the past 7 days
+    </ResponseField>
+    
+    <ResponseField name="totalPrecisionKills" type="integer" required>
+      Total number of precision (headshot) kills with this weapon in the past 7 days
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="energy" type="array">
+  Array of weapon metrics for energy slot weapons
+  
+  <Expandable title="WeaponMetric">
+    <ResponseField name="hash" type="integer" required>
+      Destiny 2 weapon hash identifier (uint32)
+    </ResponseField>
+    
+    <ResponseField name="totalUsage" type="integer" required>
+      Total number of times this weapon was equipped across all activities in the past 7 days
+    </ResponseField>
+    
+    <ResponseField name="totalKills" type="integer" required>
+      Total number of kills with this weapon in the past 7 days
+    </ResponseField>
+    
+    <ResponseField name="totalPrecisionKills" type="integer" required>
+      Total number of precision (headshot) kills with this weapon in the past 7 days
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="power" type="array">
+  Array of weapon metrics for power slot weapons
+  
+  <Expandable title="WeaponMetric">
+    <ResponseField name="hash" type="integer" required>
+      Destiny 2 weapon hash identifier (uint32)
+    </ResponseField>
+    
+    <ResponseField name="totalUsage" type="integer" required>
+      Total number of times this weapon was equipped across all activities in the past 7 days
+    </ResponseField>
+    
+    <ResponseField name="totalKills" type="integer" required>
+      Total number of kills with this weapon in the past 7 days
+    </ResponseField>
+    
+    <ResponseField name="totalPrecisionKills" type="integer" required>
+      Total number of precision (headshot) kills with this weapon in the past 7 days
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## What Metrics Are Tracked
+
+The weapon metrics track usage and performance data from raid activities:
+
+- **Usage Count**: How many times a weapon was equipped during raid encounters
+- **Kill Count**: Total number of enemies defeated with the weapon
+- **Precision Kill Count**: Kills that were precision hits (headshots/crits)
+
+Data is aggregated hourly and covers a rolling 168-hour (7-day) window from the current time.
+
+<RequestExample>
+```bash cURL
+curl --request GET \
+  --url 'https://api.raidhub.io/metrics/weapons/rolling-week?sort=kills&count=10' \
+  --header 'X-API-Key: your_api_key'
+```
+
+```javascript JavaScript
+const response = await fetch(
+  'https://api.raidhub.io/metrics/weapons/rolling-week?sort=kills&count=10',
+  {
+    headers: {
+      'X-API-Key': 'your_api_key'
+    }
+  }
+);
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+  'https://api.raidhub.io/metrics/weapons/rolling-week',
+  params={'sort': 'kills', 'count': 10},
+  headers={'X-API-Key': 'your_api_key'}
+)
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json Response
+{
+  "minted": "2026-03-03T23:30:00.000Z",
+  "success": true,
+  "response": {
+    "kinetic": [
+      {
+        "hash": 4023807721,
+        "totalUsage": 15234,
+        "totalKills": 452891,
+        "totalPrecisionKills": 289234
+      },
+      {
+        "hash": 3841416152,
+        "totalUsage": 12567,
+        "totalKills": 398234,
+        "totalPrecisionKills": 245123
+      }
+    ],
+    "energy": [
+      {
+        "hash": 3778520451,
+        "totalUsage": 18456,
+        "totalKills": 523467,
+        "totalPrecisionKills": 312456
+      },
+      {
+        "hash": 2046920820,
+        "totalUsage": 14321,
+        "totalKills": 445678,
+        "totalPrecisionKills": 267890
+      }
+    ],
+    "power": [
+      {
+        "hash": 3849810018,
+        "totalUsage": 16789,
+        "totalKills": 289456,
+        "totalPrecisionKills": 98234
+      },
+      {
+        "hash": 2545401128,
+        "totalUsage": 13245,
+        "totalKills": 234567,
+        "totalPrecisionKills": 78456
+      }
+    ]
+  }
+}
+```
+</ResponseExample>
+
+## Notes
+
+- Response is cached for 5 minutes
+- Weapon hashes can be mapped to weapon details using the Bungie.net API manifest
+- The rolling window is calculated from the current hour backwards 168 hours
+- Data only includes raid activity weapon usage

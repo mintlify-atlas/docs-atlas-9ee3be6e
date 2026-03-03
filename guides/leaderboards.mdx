@@ -1,0 +1,621 @@
+---
+title: Using Leaderboards
+description: Learn how to query RaidHub leaderboards including global, raid-specific, pantheon, team, and clan rankings
+---
+
+## Overview
+
+RaidHub provides multiple types of leaderboards to rank players and teams across various categories. These leaderboards allow you to find top performers, search for specific players, and track competitive rankings.
+
+## Leaderboard Types
+
+<CardGroup cols={2}>
+  <Card title="Individual Global" icon="globe">
+    Rankings across all raids (clears, fresh clears, sherpas, time played, speed)
+  </Card>
+  
+  <Card title="Individual Raid" icon="dungeon">
+    Rankings for specific raids (clears, fresh clears, sherpas)
+  </Card>
+  
+  <Card title="Individual Pantheon" icon="star">
+    Rankings for specific Pantheon versions (clears, fresh clears, score)
+  </Card>
+  
+  <Card title="Team Contest" icon="users">
+    World first race rankings for contest mode completions
+  </Card>
+  
+  <Card title="Team First" icon="trophy">
+    First clear leaderboards for specific activity versions
+  </Card>
+  
+  <Card title="Clan" icon="people-group">
+    Clan rankings based on various metrics
+  </Card>
+</CardGroup>
+
+## Individual Global Leaderboards
+
+Global leaderboards rank players across all raid activities.
+
+### Available Categories
+
+- `clears` - Total raid completions
+- `freshClears` - Total fresh raid completions
+- `sherpas` - Total sherpa runs (carrying first-timers)
+- `timeInRaids` - Total time spent in raids
+- `speed` - Sum of best times across all raids
+- `contest` - World first race score
+
+### Querying Global Leaderboards
+
+<CodeGroup>
+```bash cURL
+# Get top 50 players by total clears
+curl "https://api.raid.report/v2/leaderboard/individual/global/clears?page=1&count=50"
+
+# Search for a specific player on the leaderboard
+curl "https://api.raid.report/v2/leaderboard/individual/global/clears?search=4611686018484930134&count=25"
+```
+
+```javascript JavaScript
+// Get top players
+const response = await fetch(
+  'https://api.raid.report/v2/leaderboard/individual/global/clears?page=1&count=50'
+);
+const leaderboard = await response.json();
+
+console.log('Top players:', leaderboard.entries);
+
+// Search for a specific player
+const searchResponse = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/global/clears?search=${membershipId}&count=25`
+);
+const playerRanking = await searchResponse.json();
+console.log('Player rank:', playerRanking.entries[0].rank);
+```
+
+```python Python
+import requests
+
+# Get top players
+response = requests.get(
+    'https://api.raid.report/v2/leaderboard/individual/global/clears',
+    params={'page': 1, 'count': 50}
+)
+leaderboard = response.json()
+
+# Search for a specific player
+search_response = requests.get(
+    'https://api.raid.report/v2/leaderboard/individual/global/clears',
+    params={'search': membership_id, 'count': 25}
+)
+player_ranking = search_response.json()
+print('Player rank:', player_ranking['entries'][0]['rank'])
+```
+</CodeGroup>
+
+### Global Leaderboard Parameters
+
+<ParamField path="category" type="string" required>
+  Leaderboard category: `clears`, `freshClears`, `sherpas`, `timeInRaids`, `speed`, or `contest`
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number (1-indexed)
+</ParamField>
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries per page (10-100)
+</ParamField>
+
+<ParamField query="search" type="string">
+  Membership ID to search for. Returns entries centered around the player's rank.
+</ParamField>
+
+### Example Response
+
+```json
+{
+  "type": "individual",
+  "format": "numerical",
+  "page": 1,
+  "count": 50,
+  "entries": [
+    {
+      "rank": 1,
+      "value": 15234,
+      "playerInfo": {
+        "membershipId": "4611686018484930134",
+        "membershipType": 3,
+        "displayName": "TopPlayer",
+        "bungieGlobalDisplayName": "TopPlayer",
+        "bungieGlobalDisplayNameCode": 1234
+      }
+    }
+  ]
+}
+```
+
+## Individual Raid Leaderboards
+
+Raid-specific leaderboards rank players within a single raid activity.
+
+### Available Categories
+
+- `clears` - Total completions of the raid
+- `freshClears` - Fresh completions only
+- `sherpas` - Sherpa runs
+
+### Querying Raid Leaderboards
+
+<CodeGroup>
+```bash cURL
+# Get top players for Last Wish by clears
+curl "https://api.raid.report/v2/leaderboard/individual/raid/last-wish/clears?page=1&count=50"
+
+# Get top players for Root of Nightmares by fresh clears
+curl "https://api.raid.report/v2/leaderboard/individual/raid/root-of-nightmares/freshClears?page=1&count=50"
+```
+
+```javascript JavaScript
+const raidSlug = 'last-wish';
+const category = 'clears';
+
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/raid/${raidSlug}/${category}?page=1&count=50`
+);
+const leaderboard = await response.json();
+
+// Find a player's rank
+const searchResponse = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/raid/${raidSlug}/${category}?search=${membershipId}&count=25`
+);
+const playerData = await searchResponse.json();
+```
+
+```python Python
+raid_slug = 'last-wish'
+category = 'clears'
+
+response = requests.get(
+    f'https://api.raid.report/v2/leaderboard/individual/raid/{raid_slug}/{category}',
+    params={'page': 1, 'count': 50}
+)
+leaderboard = response.json()
+```
+</CodeGroup>
+
+### Common Raid Slugs
+
+- `last-wish`
+- `garden-of-salvation`
+- `deep-stone-crypt`
+- `vault-of-glass`
+- `vow-of-the-disciple`
+- `kings-fall`
+- `root-of-nightmares`
+- `crotas-end`
+- `salvations-edge`
+
+<Note>
+Raid slugs are lowercase with hyphens. If unsure of the slug, check the RaidHub website or API documentation.
+</Note>
+
+## Individual Pantheon Leaderboards
+
+Pantheon leaderboards rank players for specific Pantheon versions.
+
+### Available Categories
+
+- `clears` - Total completions
+- `freshClears` - Fresh completions
+- `score` - Highest score achieved
+
+### Querying Pantheon Leaderboards
+
+<CodeGroup>
+```bash cURL
+curl "https://api.raid.report/v2/leaderboard/individual/pantheon/atraks-sovereign/score?page=1&count=50"
+```
+
+```javascript JavaScript
+const versionSlug = 'atraks-sovereign';
+const category = 'score';
+
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/pantheon/${versionSlug}/${category}?page=1&count=50`
+);
+const leaderboard = await response.json();
+```
+
+```python Python
+version_slug = 'atraks-sovereign'
+category = 'score'
+
+response = requests.get(
+    f'https://api.raid.report/v2/leaderboard/individual/pantheon/{version_slug}/{category}',
+    params={'page': 1, 'count': 50}
+)
+leaderboard = response.json()
+```
+</CodeGroup>
+
+## Team Contest Leaderboards
+
+Team contest leaderboards rank teams that completed the raid during the official contest period (typically 24-48 hours after raid launch).
+
+### Querying Team Contest Leaderboards
+
+<CodeGroup>
+```bash cURL
+curl "https://api.raid.report/v2/leaderboard/team/contest/salvations-edge?page=1&count=50"
+```
+
+```javascript JavaScript
+const raidSlug = 'salvations-edge';
+
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/team/contest/${raidSlug}?page=1&count=50`
+);
+const leaderboard = await response.json();
+
+// Teams are sorted by completion time (fastest first)
+leaderboard.entries.forEach(entry => {
+  console.log(`Rank ${entry.rank}: ${entry.value}s - Instance ${entry.instanceId}`);
+});
+```
+
+```python Python
+raid_slug = 'salvations-edge'
+
+response = requests.get(
+    f'https://api.raid.report/v2/leaderboard/team/contest/{raid_slug}',
+    params={'page': 1, 'count': 50}
+)
+leaderboard = response.json()
+
+for entry in leaderboard['entries']:
+    print(f"Rank {entry['rank']}: {entry['value']}s - Instance {entry['instanceId']}")
+```
+</CodeGroup>
+
+### Team Leaderboard Response
+
+```json
+{
+  "type": "team",
+  "format": "duration",
+  "page": 1,
+  "count": 50,
+  "entries": [
+    {
+      "rank": 1,
+      "value": 15234,
+      "instanceId": "12345678901234567",
+      "players": [
+        {
+          "membershipId": "4611686018484930134",
+          "membershipType": 3,
+          "displayName": "Player1"
+        }
+      ]
+    }
+  ]
+}
+```
+
+<Note>
+The `value` field for team leaderboards represents completion time in seconds. The `format` field indicates this is a duration-based leaderboard.
+</Note>
+
+## Team First Leaderboards
+
+These leaderboards show the first teams to complete a specific activity version, regardless of whether it was during contest mode.
+
+### Querying Team First Leaderboards
+
+<CodeGroup>
+```bash cURL
+curl "https://api.raid.report/v2/leaderboard/team/first/100/1?page=1&count=50"
+```
+
+```javascript JavaScript
+const activityId = 100;
+const versionId = 1;
+
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/team/first/${activityId}/${versionId}?page=1&count=50`
+);
+const leaderboard = await response.json();
+```
+</CodeGroup>
+
+## Clan Leaderboards
+
+Clan leaderboards rank Destiny 2 clans based on various metrics.
+
+### Available Columns
+
+- `weighted_contest_score` (default) - Contest performance score
+- Other clan-specific metrics
+
+### Querying Clan Leaderboards
+
+<CodeGroup>
+```bash cURL
+curl "https://api.raid.report/v2/leaderboard/clan?page=1&count=50&column=weighted_contest_score"
+```
+
+```javascript JavaScript
+const response = await fetch(
+  'https://api.raid.report/v2/leaderboard/clan?page=1&count=50&column=weighted_contest_score'
+);
+const clanLeaderboard = await response.json();
+
+clanLeaderboard.forEach(entry => {
+  console.log(`${entry.name} - Score: ${entry.value}`);
+});
+```
+
+```python Python
+response = requests.get(
+    'https://api.raid.report/v2/leaderboard/clan',
+    params={
+        'page': 1,
+        'count': 50,
+        'column': 'weighted_contest_score'
+    }
+)
+clan_leaderboard = response.json()
+```
+</CodeGroup>
+
+### Clan Leaderboard Parameters
+
+<ParamField query="page" type="integer" default="1">
+  Page number (1-indexed)
+</ParamField>
+
+<ParamField query="count" type="integer" default="50">
+  Number of entries per page (10-100)
+</ParamField>
+
+<ParamField query="column" type="string" default="weighted_contest_score">
+  Sort column for clan rankings
+</ParamField>
+
+## Pagination
+
+All leaderboards use page-based pagination.
+
+### How Pagination Works
+
+<Steps>
+  <Step title="Request a page">
+    Specify `page` (1-indexed) and `count` (entries per page)
+  </Step>
+  
+  <Step title="Calculate offset">
+    The API calculates offset as `(page - 1) * count`
+  </Step>
+  
+  <Step title="Receive entries">
+    Get up to `count` entries starting from the calculated offset
+  </Step>
+  
+  <Step title="Navigate pages">
+    Increment `page` to get the next set of results
+  </Step>
+</Steps>
+
+### Pagination Example
+
+```javascript
+// Get first 3 pages of a leaderboard
+async function getMultiplePages(category, totalPages = 3) {
+  const allEntries = [];
+  
+  for (let page = 1; page <= totalPages; page++) {
+    const response = await fetch(
+      `https://api.raid.report/v2/leaderboard/individual/global/${category}?page=${page}&count=50`
+    );
+    const data = await response.json();
+    allEntries.push(...data.entries);
+  }
+  
+  return allEntries;
+}
+
+const topPlayers = await getMultiplePages('clears', 5);
+console.log(`Got ${topPlayers.length} total entries`);
+```
+
+## Searching for Players
+
+When using the `search` parameter with a membership ID, the API returns entries **centered around the player's rank**.
+
+### Search Behavior
+
+<CodeGroup>
+```javascript JavaScript
+// Search returns entries around the player's position
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/global/clears?search=${membershipId}&count=25`
+);
+const data = await response.json();
+
+// The response includes:
+// - ~12 players ranked above the searched player
+// - The searched player
+// - ~12 players ranked below the searched player
+// This gives context about where the player ranks
+
+const searchedPlayer = data.entries.find(
+  entry => entry.playerInfo.membershipId === membershipId
+);
+
+console.log(`Player rank: ${searchedPlayer.rank}`);
+console.log(`Player value: ${searchedPlayer.value}`);
+console.log(`Page: ${data.page}`);
+```
+</CodeGroup>
+
+<Warning>
+If the player is not on the leaderboard, you'll receive a `404 PlayerNotOnLeaderboardError`.
+</Warning>
+
+## Understanding Response Formats
+
+Leaderboards return different formats based on the type of data:
+
+<Tabs>
+  <Tab title="Numerical">
+    Used for count-based leaderboards (clears, sherpas, etc.)
+    
+    ```json
+    {
+      "type": "individual",
+      "format": "numerical",
+      "entries": [
+        {
+          "rank": 1,
+          "value": 15234  // Number of clears, sherpas, etc.
+        }
+      ]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Duration">
+    Used for time-based leaderboards (contest completions)
+    
+    ```json
+    {
+      "type": "team",
+      "format": "duration",
+      "entries": [
+        {
+          "rank": 1,
+          "value": 18234  // Completion time in seconds
+        }
+      ]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Percentage">
+    Used for percentage-based leaderboards
+    
+    ```json
+    {
+      "format": "percentage",
+      "entries": [
+        {
+          "rank": 1,
+          "value": 0.9534  // Percentage value (0-1)
+        }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Common Use Cases
+
+### Finding Top Players in a Raid
+
+```javascript
+const raidSlug = 'salvations-edge';
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/raid/${raidSlug}/clears?page=1&count=10`
+);
+const leaderboard = await response.json();
+
+leaderboard.entries.forEach((entry, index) => {
+  console.log(`${index + 1}. ${entry.playerInfo.displayName} - ${entry.value} clears`);
+});
+```
+
+### Checking a Player's Global Rank
+
+```javascript
+const membershipId = '4611686018484930134';
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/individual/global/clears?search=${membershipId}&count=25`
+);
+const data = await response.json();
+
+const player = data.entries.find(
+  entry => entry.playerInfo.membershipId === membershipId
+);
+
+if (player) {
+  console.log(`Global Rank: #${player.rank}`);
+  console.log(`Total Clears: ${player.value}`);
+}
+```
+
+### Viewing World First Teams
+
+```javascript
+const raidSlug = 'salvations-edge';
+const response = await fetch(
+  `https://api.raid.report/v2/leaderboard/team/contest/${raidSlug}?page=1&count=5`
+);
+const leaderboard = await response.json();
+
+leaderboard.entries.forEach(entry => {
+  const hours = Math.floor(entry.value / 3600);
+  const minutes = Math.floor((entry.value % 3600) / 60);
+  console.log(`Rank ${entry.rank}: ${hours}h ${minutes}m`);
+  console.log('Team:', entry.players.map(p => p.displayName).join(', '));
+});
+```
+
+## Error Handling
+
+<ResponseField name="404 - PlayerNotOnLeaderboardError" type="error">
+  The searched player does not appear on this leaderboard
+</ResponseField>
+
+<ResponseField name="404 - RaidNotFoundError" type="error">
+  The specified raid slug is invalid
+</ResponseField>
+
+<ResponseField name="404 - PantheonVersionNotFoundError" type="error">
+  The specified Pantheon version is invalid
+</ResponseField>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Cache Leaderboards" icon="database">
+    Leaderboards are cached for 15 seconds server-side. Cache on your end too.
+  </Card>
+  
+  <Card title="Use Appropriate Count" icon="list-ol">
+    Request only the number of entries you need to reduce response size
+  </Card>
+  
+  <Card title="Handle 404s" icon="triangle-exclamation">
+    Not all players appear on all leaderboards - handle NotOnLeaderboardError
+  </Card>
+  
+  <Card title="Check Format Field" icon="check">
+    Use the `format` field to properly display values (duration vs numerical)
+  </Card>
+</CardGroup>
+
+## Related Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Player Data" icon="user" href="/guides/player-data">
+    Get detailed player profiles and statistics
+  </Card>
+  
+  <Card title="Instance Data" icon="chart-line" href="/guides/instance-data">
+    View details of specific raid completions
+  </Card>
+</CardGroup>

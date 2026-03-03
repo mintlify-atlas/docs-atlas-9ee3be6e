@@ -1,0 +1,421 @@
+---
+title: 'Manifest'
+description: 'Get activity definitions, version definitions, and all RaidHub metadata'
+---
+
+## Overview
+
+The Manifest endpoint provides the complete RaidHub manifest, which contains definitions for all activities and versions tracked in the RaidHub database. This is a foundational endpoint that returns all the metadata needed to interpret other API responses, including activity names, version types, raid categorizations, and visual assets.
+
+<Note>
+This endpoint is cached for 30 seconds to optimize performance.
+</Note>
+
+## Endpoint
+
+<CodeGroup>
+```bash cURL
+curl https://api.raidhub.io/manifest \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.raidhub.io/manifest', {
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.raidhub.io/manifest',
+    headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Request
+
+**Method:** `GET`
+
+**URL:** `/manifest`
+
+**Parameters:** None
+
+## Response
+
+The response includes all activity and version definitions, along with categorized lists of raids and their characteristics.
+
+### Response Fields
+
+<ResponseField name="hashes" type="object" required>
+  A mapping of Bungie.net activity hashes to RaidHub activityId and versionId. Each key is a uint32 hash from Bungie's API.
+
+  <Expandable title="properties">
+    <ResponseField name="activityId" type="integer" required>
+      The RaidHub activity ID
+    </ResponseField>
+    <ResponseField name="versionId" type="integer" required>
+      The RaidHub version ID
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="activityDefinitions" type="object" required>
+  A mapping of each RaidHub activityId to its complete definition. Keys are activity IDs as strings.
+
+  <Expandable title="ActivityDefinition properties">
+    <ResponseField name="id" type="integer" required>
+      Unique identifier for this activity
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Display name of the activity (e.g., "Vault of Glass")
+    </ResponseField>
+    <ResponseField name="path" type="string" required>
+      URL-safe path identifier (e.g., "vaultofglass")
+    </ResponseField>
+    <ResponseField name="isSunset" type="boolean" required>
+      Whether this activity has been removed from the game
+    </ResponseField>
+    <ResponseField name="isRaid" type="boolean" required>
+      Whether this is classified as a raid activity
+    </ResponseField>
+    <ResponseField name="releaseDate" type="string" required>
+      ISO 8601 timestamp of when the activity was released (nullable)
+    </ResponseField>
+    <ResponseField name="dayOneEnd" type="string" required>
+      ISO 8601 timestamp marking the end of day one period (nullable)
+    </ResponseField>
+    <ResponseField name="contestEnd" type="string" required>
+      ISO 8601 timestamp marking the end of contest mode (nullable)
+    </ResponseField>
+    <ResponseField name="weekOneEnd" type="string" required>
+      ISO 8601 timestamp marking the end of week one (nullable)
+    </ResponseField>
+    <ResponseField name="milestoneHash" type="integer" required>
+      Bungie.net milestone hash for this activity (nullable)
+    </ResponseField>
+    <ResponseField name="splashSlug" type="string" required>
+      Identifier for retrieving splash images from the CDN
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="versionDefinitions" type="object" required>
+  A mapping of each RaidHub versionId to its definition. Versions represent difficulty modes like Normal, Master, Prestige, or specific encounter variants.
+
+  <Expandable title="VersionDefinition properties">
+    <ResponseField name="id" type="integer" required>
+      Unique identifier for this version
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Display name of the version (e.g., "Master", "Standard")
+    </ResponseField>
+    <ResponseField name="path" type="string" required>
+      URL-safe path identifier (e.g., "master", "normal")
+    </ResponseField>
+    <ResponseField name="associatedActivityId" type="integer">
+      The activity ID this version is associated with (nullable)
+    </ResponseField>
+    <ResponseField name="isChallengeMode" type="boolean" required>
+      Whether this version represents a challenge mode
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="listedRaidIds" type="array" required>
+  Array of activity IDs for all raids, ordered from newest to oldest. Sunset raids are listed at the end.
+</ResponseField>
+
+<ResponseField name="sunsetRaidIds" type="array" required>
+  Array of activity IDs for raids that have been removed from the game (vaulted content).
+</ResponseField>
+
+<ResponseField name="prestigeRaidIds" type="array" required>
+  Array of activity IDs for raids that had a prestige difficulty mode.
+</ResponseField>
+
+<ResponseField name="masterRaidIds" type="array" required>
+  Array of activity IDs for raids that have a master difficulty mode available.
+</ResponseField>
+
+<ResponseField name="contestRaidIds" type="array" required>
+  Array of activity IDs for raids that had contest mode enabled at launch.
+</ResponseField>
+
+<ResponseField name="resprisedRaidIds" type="array" required>
+  Array of activity IDs for raids that were reprised from Destiny 1 to Destiny 2.
+</ResponseField>
+
+<ResponseField name="resprisedChallengeVersionIds" type="array" required>
+  Array of version IDs that represent challenge modes for reprised raids.
+</ResponseField>
+
+<ResponseField name="pantheonIds" type="array" required>
+  Array of activity IDs for Pantheon activities.
+</ResponseField>
+
+<ResponseField name="versionsForActivity" type="object" required>
+  A mapping of activity IDs to arrays of version IDs available for that activity. Keys are activity IDs as strings.
+</ResponseField>
+
+<ResponseField name="rankingTiers" type="array" required>
+  Array of ranking tier definitions used for player performance classifications.
+
+  <Expandable title="Tier properties">
+    <ResponseField name="minPercentile" type="number" required>
+      Minimum percentile threshold for this tier (0-1)
+    </ResponseField>
+    <ResponseField name="tierName" type="string" required>
+      Display name of the tier
+    </ResponseField>
+    <ResponseField name="tierColor" type="string" required>
+      Tailwind CSS color class for UI rendering
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="feats" type="array" required>
+  Array of feat (modifier/challenge) definitions available in raids.
+
+  <Expandable title="FeatDefinition properties">
+    <ResponseField name="hash" type="integer" required>
+      Bungie.net hash for this feat
+    </ResponseField>
+    <ResponseField name="skullHash" type="integer" required>
+      Skull modifier hash associated with this feat
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Full display name of the feat
+    </ResponseField>
+    <ResponseField name="shortName" type="string" required>
+      Abbreviated name for compact displays
+    </ResponseField>
+    <ResponseField name="description" type="string" required>
+      Full description of the feat's effects
+    </ResponseField>
+    <ResponseField name="shortDescription" type="string" required>
+      Brief description for tooltips
+    </ResponseField>
+    <ResponseField name="iconPath" type="string" required>
+      Path to the feat's icon on Bungie.net CDN
+    </ResponseField>
+    <ResponseField name="modifierPowerContribution" type="integer" required>
+      Power level contribution of this modifier
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="splashUrls" type="object" required>
+  A mapping of activity IDs to arrays of splash image URLs hosted on the RaidHub CDN.
+
+  <Expandable title="ImageContentData properties">
+    <ResponseField name="slug" type="string" required>
+      Image identifier slug
+    </ResponseField>
+    <ResponseField name="size" type="string" required>
+      Image size variant: "tiny", "small", "medium", "large", "xlarge", or "full"
+    </ResponseField>
+    <ResponseField name="fileName" type="string" required>
+      Name of the image file
+    </ResponseField>
+    <ResponseField name="fileFormat" type="string" required>
+      File extension (e.g., "jpg", "png", "webp")
+    </ResponseField>
+    <ResponseField name="path" type="string" required>
+      Full CDN path to the image
+    </ResponseField>
+    <ResponseField name="url" type="string" required>
+      Complete URL to the image on the RaidHub CDN
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "minted": "2026-03-03T23:45:12.000Z",
+  "success": true,
+  "response": {
+    "hashes": {
+      "2122313384": {
+        "activityId": 9,
+        "versionId": 1
+      },
+      "3881495763": {
+        "activityId": 9,
+        "versionId": 4
+      }
+    },
+    "activityDefinitions": {
+      "9": {
+        "id": 9,
+        "name": "Vault of Glass",
+        "path": "vaultofglass",
+        "isSunset": false,
+        "isRaid": true,
+        "releaseDate": "2021-05-22T00:00:00.000Z",
+        "dayOneEnd": "2021-05-23T00:00:00.000Z",
+        "contestEnd": "2021-05-23T00:00:00.000Z",
+        "weekOneEnd": "2021-05-25T00:00:00.000Z",
+        "milestoneHash": 1888320892,
+        "splashSlug": "vog"
+      }
+    },
+    "versionDefinitions": {
+      "1": {
+        "id": 1,
+        "name": "Standard",
+        "path": "normal",
+        "associatedActivityId": null,
+        "isChallengeMode": false
+      },
+      "4": {
+        "id": 4,
+        "name": "Master",
+        "path": "master",
+        "associatedActivityId": null,
+        "isChallengeMode": false
+      }
+    },
+    "listedRaidIds": [14, 13, 12, 11, 10, 9, 8, 7],
+    "sunsetRaidIds": [1, 2, 3, 4, 5, 6],
+    "prestigeRaidIds": [1, 2, 3, 4, 5],
+    "masterRaidIds": [8, 9, 10, 11, 12, 13],
+    "contestRaidIds": [7, 8, 9, 10, 11, 12, 13, 14],
+    "resprisedRaidIds": [7, 9, 11],
+    "resprisedChallengeVersionIds": [78, 79, 80],
+    "pantheonIds": [101],
+    "versionsForActivity": {
+      "9": [1, 4, 78, 79, 80]
+    },
+    "rankingTiers": [
+      {
+        "minPercentile": 0.95,
+        "tierName": "Gold",
+        "tierColor": "text-yellow-500"
+      },
+      {
+        "minPercentile": 0.75,
+        "tierName": "Silver",
+        "tierColor": "text-gray-400"
+      }
+    ],
+    "feats": [
+      {
+        "hash": 3809790115,
+        "skullHash": 3809790115,
+        "name": "Arc Surge",
+        "shortName": "Arc",
+        "description": "Arc damage from all sources increased.",
+        "shortDescription": "Arc damage increased",
+        "iconPath": "/img/misc/missing_icon_d2.png",
+        "modifierPowerContribution": 0
+      }
+    ],
+    "splashUrls": {
+      "9": [
+        {
+          "slug": "vog",
+          "size": "medium",
+          "fileName": "medium.jpg",
+          "fileFormat": "jpg",
+          "path": "content/splash/vog/medium.jpg",
+          "url": "https://cdn.raidhub.io/content/splash/vog/medium.jpg"
+        }
+      ]
+    }
+  }
+}
+```
+
+## Use Cases
+
+### Resolving Activity Names
+
+The manifest allows you to convert activity IDs from other endpoints into human-readable names:
+
+```javascript
+const manifest = await fetchManifest();
+const activityId = 9;
+const activityName = manifest.response.activityDefinitions[activityId].name;
+// "Vault of Glass"
+```
+
+### Converting Bungie Hashes
+
+When working with Bungie.net API data, use the hashes mapping to identify RaidHub activities:
+
+```javascript
+const bungieHash = 2122313384;
+const { activityId, versionId } = manifest.response.hashes[bungieHash];
+// activityId: 9, versionId: 1 (Vault of Glass Normal)
+```
+
+### Filtering Active Raids
+
+Display only currently active (non-sunset) raids:
+
+```javascript
+const activeRaids = manifest.response.listedRaidIds
+  .filter(id => !manifest.response.sunsetRaidIds.includes(id))
+  .map(id => manifest.response.activityDefinitions[id]);
+```
+
+### Loading Raid Images
+
+Retrieve splash images for raid selection screens:
+
+```javascript
+const activityId = 9;
+const images = manifest.response.splashUrls[activityId];
+const mediumImage = images.find(img => img.size === 'medium');
+// Use mediumImage.url in your UI
+```
+
+### Checking Raid Features
+
+Determine if a raid has specific features or modes:
+
+```javascript
+const activityId = 9;
+const hasMaster = manifest.response.masterRaidIds.includes(activityId);
+const hadContest = manifest.response.contestRaidIds.includes(activityId);
+const isReprised = manifest.response.resprisedRaidIds.includes(activityId);
+```
+
+## Caching Recommendations
+
+The manifest data changes infrequently (typically only when new content is released). Consider caching the manifest response in your application with a TTL of 5-10 minutes to reduce API calls and improve performance.
+
+```javascript
+// Example caching pattern
+let cachedManifest = null;
+let cacheTime = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getManifest() {
+  const now = Date.now();
+  if (cachedManifest && cacheTime && (now - cacheTime) < CACHE_TTL) {
+    return cachedManifest;
+  }
+  
+  cachedManifest = await fetchManifest();
+  cacheTime = now;
+  return cachedManifest;
+}
+```
+
+## Related Endpoints
+
+- [Player Profile](/api/player) - Uses activityIds from the manifest
+- [Instance Details](/api/instance) - References activity and version definitions
+- [Leaderboards](/api/leaderboard) - Requires manifest for activity filtering

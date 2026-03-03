@@ -1,0 +1,41 @@
+---
+title: Rate Limits
+description: Understanding API rate limiting and usage quotas
+---
+
+The RaidHub API does not currently implement automatic rate limiting on a per-key basis. However, to ensure fair usage and system stability, we monitor API usage patterns and may implement limits if necessary.
+
+## Usage Guidelines
+
+When using the RaidHub API, please follow these best practices:
+
+- **Cache responses** when appropriate to reduce unnecessary API calls
+- **Implement reasonable delays** between batch requests
+- **Avoid polling** endpoints at high frequencies
+- **Use pagination** efficiently for large datasets
+
+<Note>
+If you anticipate making a high volume of requests or need guaranteed rate limits for your application, please contact us at [admin@raidhub.io](mailto:admin@raidhub.io) to discuss your use case.
+</Note>
+
+## Fair Use Policy
+
+We reserve the right to:
+
+- Monitor API usage patterns
+- Throttle or block API keys that generate excessive load
+- Implement rate limits in the future as the API evolves
+
+<Warning>
+Excessive or abusive API usage may result in temporary or permanent suspension of API access. If you receive unexpected errors or notice degraded performance, please reach out to our team.
+</Warning>
+
+## Future Rate Limiting
+
+As the RaidHub API continues to grow, we may introduce formal rate limiting with:
+
+- Requests per minute/hour quotas
+- Rate limit headers in API responses
+- Different tiers for different API key types
+
+We will notify all API users before implementing any rate limiting changes.

@@ -1,0 +1,255 @@
+---
+title: "Get Player Activity History"
+api: "GET /player/{membershipId}/history"
+description: "Get a player's raid activity history with cursor-based pagination"
+---
+
+Get a player's activity history with cursor-based pagination. This endpoint replaces the deprecated `/activities` endpoint.
+
+<Warning>
+  This endpoint requires authentication if the player has a private profile.
+</Warning>
+
+## Path Parameters
+
+<ParamField path="membershipId" type="string" required>
+  The Destiny membership ID of the player (int64 format).
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="count" type="integer" default="2000">
+  Number of activities to return. Minimum 10, maximum 5000.
+  
+  <Info>
+    The first request (without cursor) may return fewer than the requested count for performance optimization.
+  </Info>
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Date cursor for pagination (ISO 8601 format). Omit this parameter for the first request.
+  
+  Use the `nextCursor` value from the previous response for subsequent requests.
+</ParamField>
+
+## Response
+
+<ResponseField name="membershipId" type="string">
+  The player's Destiny membership ID.
+</ResponseField>
+
+<ResponseField name="nextCursor" type="string" nullable>
+  ISO 8601 timestamp to use as cursor for the next page. `null` if no more activities exist.
+</ResponseField>
+
+<ResponseField name="activities" type="array">
+  Array of raid instances the player participated in.
+  
+  <Expandable title="InstanceForPlayer">
+    <ResponseField name="instanceId" type="string">
+      Unique instance identifier (int64 format).
+    </ResponseField>
+    
+    <ResponseField name="hash" type="integer">
+      Bungie activity hash (uint32).
+    </ResponseField>
+    
+    <ResponseField name="completed" type="boolean">
+      Whether the instance was completed.
+    </ResponseField>
+    
+    <ResponseField name="flawless" type="boolean" nullable>
+      Whether the run was flawless (no deaths). `null` if not tracked.
+    </ResponseField>
+    
+    <ResponseField name="fresh" type="boolean" nullable>
+      Whether the run started from the beginning. `null` if not tracked.
+    </ResponseField>
+    
+    <ResponseField name="playerCount" type="integer">
+      Number of players in the fireteam.
+    </ResponseField>
+    
+    <ResponseField name="skullHashes" type="array">
+      Array of modifier hashes (uint32) active during the instance.
+    </ResponseField>
+    
+    <ResponseField name="score" type="integer">
+      Final score for the instance.
+    </ResponseField>
+    
+    <ResponseField name="dateStarted" type="string">
+      ISO 8601 timestamp when the instance started.
+    </ResponseField>
+    
+    <ResponseField name="dateCompleted" type="string">
+      ISO 8601 timestamp when the instance completed.
+    </ResponseField>
+    
+    <ResponseField name="season" type="integer">
+      Destiny season number when the instance occurred.
+    </ResponseField>
+    
+    <ResponseField name="duration" type="integer">
+      Instance duration in seconds.
+    </ResponseField>
+    
+    <ResponseField name="platformType" type="integer">
+      Platform type. `0` if mixed platforms, otherwise the platform all players were on.
+    </ResponseField>
+    
+    <ResponseField name="activityId" type="integer">
+      RaidHub activity ID.
+    </ResponseField>
+    
+    <ResponseField name="versionId" type="integer">
+      RaidHub version ID (normal, master, etc.).
+    </ResponseField>
+    
+    <ResponseField name="isDayOne" type="boolean">
+      Completed during day one period.
+    </ResponseField>
+    
+    <ResponseField name="isContest" type="boolean">
+      Completed during contest mode period.
+    </ResponseField>
+    
+    <ResponseField name="isWeekOne" type="boolean">
+      Completed during week one period.
+    </ResponseField>
+    
+    <ResponseField name="isBlacklisted" type="boolean">
+      Whether the instance is blacklisted from leaderboards.
+    </ResponseField>
+    
+    <ResponseField name="player" type="object">
+      The player's specific data for this instance.
+      
+      <Expandable title="player">
+        <ResponseField name="completed" type="boolean">
+          Whether this player completed the instance.
+        </ResponseField>
+        
+        <ResponseField name="isFirstClear" type="boolean">
+          Whether this was the player's first clear of this activity.
+        </ResponseField>
+        
+        <ResponseField name="sherpas" type="integer">
+          Number of first-timers this player helped in this instance.
+        </ResponseField>
+        
+        <ResponseField name="timePlayedSeconds" type="integer">
+          Time the player spent in this instance (seconds).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+### First Page
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/history?count=100" \
+  -H "X-API-Key: your_api_key_here"
+```
+
+### Subsequent Pages
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/history?count=100&cursor=2021-05-01T00:00:00.000Z" \
+  -H "X-API-Key: your_api_key_here"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": true,
+  "response": {
+    "membershipId": "4611686018488107374",
+    "nextCursor": "2021-04-15T18:30:00.000Z",
+    "activities": [
+      {
+        "instanceId": "12345678901234567",
+        "hash": 3881495763,
+        "completed": true,
+        "flawless": false,
+        "fresh": true,
+        "playerCount": 6,
+        "skullHashes": [],
+        "score": 0,
+        "dateStarted": "2021-05-01T18:00:00.000Z",
+        "dateCompleted": "2021-05-01T19:30:00.000Z",
+        "season": 14,
+        "duration": 5400,
+        "platformType": 3,
+        "activityId": 9,
+        "versionId": 1,
+        "isDayOne": false,
+        "isContest": false,
+        "isWeekOne": false,
+        "isBlacklisted": false,
+        "player": {
+          "completed": true,
+          "isFirstClear": false,
+          "sherpas": 2,
+          "timePlayedSeconds": 5400
+        }
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+### PlayerNotFoundError (404)
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerNotFoundError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+### PlayerPrivateProfileError (403)
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerPrivateProfileError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+## Pagination Best Practices
+
+1. **First request**: Omit the `cursor` parameter
+2. **Check for more data**: If `nextCursor` is not `null`, more activities exist
+3. **Subsequent requests**: Use `nextCursor` value as the `cursor` parameter
+4. **Stop condition**: When `nextCursor` is `null`, you've reached the end
+
+## Caching Behavior
+
+- **First page** (no cursor): Cached for 30 seconds
+- **Subsequent pages** (with cursor): Cached for 24 hours
+
+The first page caching is shorter to ensure recent activity appears quickly, while historical pages are cached longer since they don't change.
+
+## Use Cases
+
+- **Activity feed**: Display recent raid completions
+- **Progress tracking**: Monitor player activity over time
+- **Stats calculation**: Analyze completion rates and trends
+- **Sherpa tracking**: Count first-time clears helped
+- **Historical analysis**: Review past raid performance

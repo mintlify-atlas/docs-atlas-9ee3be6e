@@ -1,0 +1,348 @@
+---
+title: "Get Instance"
+description: "Retrieve detailed information about a specific raid or dungeon instance with player statistics and metadata"
+---
+
+## Endpoint
+
+<ParamField path="instanceId" type="string" required>
+  The unique identifier for the activity instance. This is a 64-bit integer represented as a string.
+</ParamField>
+
+```bash
+GET /instance/{instanceId}
+```
+
+## Description
+
+Returns a PGCR (Post Game Carnage Report) object with a shape more aligned with how RaidHub displays PGCRs. This endpoint provides comprehensive information about a raid or dungeon instance, including all players who participated, their individual statistics, weapons used, and activity metadata.
+
+<Note>
+  This endpoint replaces the deprecated `/activity` endpoint. Use `/instance` for all new implementations.
+</Note>
+
+## Response
+
+<ResponseField name="instanceId" type="string" required>
+  The unique instance identifier (64-bit integer as string)
+</ResponseField>
+
+<ResponseField name="hash" type="integer" required>
+  The Bungie.net activity hash (uint32)
+</ResponseField>
+
+<ResponseField name="completed" type="boolean" required>
+  Whether the activity was successfully completed
+</ResponseField>
+
+<ResponseField name="flawless" type="boolean | null" required>
+  Whether the activity was completed flawlessly (no deaths). Null if not applicable.
+</ResponseField>
+
+<ResponseField name="fresh" type="boolean | null" required>
+  Whether this was a fresh run (started from the beginning). Null if not applicable.
+</ResponseField>
+
+<ResponseField name="playerCount" type="integer" required>
+  Number of players who participated (minimum 1)
+</ResponseField>
+
+<ResponseField name="skullHashes" type="array" required>
+  Array of modifier hashes applied to the activity. Each hash maps to a FeatDefinition by its skullHash.
+</ResponseField>
+
+<ResponseField name="score" type="integer" required>
+  The final score achieved in the activity (minimum 0)
+</ResponseField>
+
+<ResponseField name="dateStarted" type="string" required>
+  ISO 8601 timestamp when the activity started
+</ResponseField>
+
+<ResponseField name="dateCompleted" type="string" required>
+  ISO 8601 timestamp when the activity completed
+</ResponseField>
+
+<ResponseField name="season" type="integer" required>
+  The Destiny 2 season number when this instance occurred (minimum 1)
+</ResponseField>
+
+<ResponseField name="duration" type="integer" required>
+  Total activity duration in seconds (minimum 1)
+</ResponseField>
+
+<ResponseField name="platformType" type="integer" required>
+  The platform type. If all players are on the same platform, this will be the platform type (1=Xbox, 2=PSN, 3=Steam, 4=Stadia, 5=EGS, 6=BattleNet). Otherwise, it will be 0 for cross-platform.
+</ResponseField>
+
+<ResponseField name="activityId" type="integer" required>
+  RaidHub's internal activity identifier (minimum 1)
+</ResponseField>
+
+<ResponseField name="versionId" type="integer" required>
+  RaidHub's internal version identifier (minimum 1)
+</ResponseField>
+
+<ResponseField name="isDayOne" type="boolean" required>
+  Whether the instance was completed before the day one end date
+</ResponseField>
+
+<ResponseField name="isContest" type="boolean" required>
+  Whether the instance was completed before the contest mode end date
+</ResponseField>
+
+<ResponseField name="isWeekOne" type="boolean" required>
+  Whether the instance was completed before the week one end date
+</ResponseField>
+
+<ResponseField name="isBlacklisted" type="boolean" required>
+  Whether the instance is blacklisted from leaderboards
+</ResponseField>
+
+<ResponseField name="leaderboardRank" type="integer | null" required>
+  The instance's rank on the leaderboard, if applicable. Null if not ranked.
+</ResponseField>
+
+<ResponseField name="metadata" type="object" required>
+  Activity metadata information
+  <Expandable title="metadata properties">
+    <ResponseField name="activityName" type="string" required>
+      Human-readable name of the activity (e.g., "Vault of Glass")
+    </ResponseField>
+    <ResponseField name="versionName" type="string" required>
+      Version or difficulty name (e.g., "Master", "Standard")
+    </ResponseField>
+    <ResponseField name="isRaid" type="boolean" required>
+      Whether this is a raid activity (true) or dungeon (false)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="players" type="array" required>
+  Array of player objects with detailed statistics
+  <Expandable title="player properties">
+    <ResponseField name="playerInfo" type="object" required>
+      Player identification and profile information
+      <Expandable title="playerInfo properties">
+        <ResponseField name="membershipId" type="string" required>
+          Destiny 2 membership ID (64-bit integer as string)
+        </ResponseField>
+        <ResponseField name="membershipType" type="integer | null" required>
+          Platform where the player created their account (1-6, see platformType)
+        </ResponseField>
+        <ResponseField name="iconPath" type="string | null" required>
+          Path to player's profile icon
+        </ResponseField>
+        <ResponseField name="displayName" type="string | null" required>
+          Platform-specific display name (legacy, no longer shown in-game)
+        </ResponseField>
+        <ResponseField name="bungieGlobalDisplayName" type="string | null" required>
+          Bungie name (e.g., "Newo")
+        </ResponseField>
+        <ResponseField name="bungieGlobalDisplayNameCode" type="string | null" required>
+          Bungie name code (e.g., "9010")
+        </ResponseField>
+        <ResponseField name="lastSeen" type="string" required>
+          ISO 8601 timestamp of player's last activity
+        </ResponseField>
+        <ResponseField name="isPrivate" type="boolean" required>
+          Whether the player has hidden their profile on Bungie.net
+        </ResponseField>
+        <ResponseField name="cheatLevel" type="integer" required>
+          Cheat detection level: 0=None, 1=Suspicious, 2=Moderate, 3=Extreme, 4=Blacklisted
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="completed" type="boolean" required>
+      Whether this player completed the activity
+    </ResponseField>
+    <ResponseField name="isFirstClear" type="boolean" required>
+      Whether this was the player's first clear of this activity
+    </ResponseField>
+    <ResponseField name="sherpas" type="integer" required>
+      Number of first-timers this player helped (minimum 0)
+    </ResponseField>
+    <ResponseField name="timePlayedSeconds" type="integer" required>
+      Total time this player spent in the activity (seconds)
+    </ResponseField>
+    <ResponseField name="characters" type="array" required>
+      Array of characters the player used during the activity
+      <Expandable title="character properties">
+        <ResponseField name="characterId" type="string" required>
+          Character ID (64-bit integer as string)
+        </ResponseField>
+        <ResponseField name="classHash" type="integer | null" required>
+          Bungie.net hash for the character class (Titan/Hunter/Warlock)
+        </ResponseField>
+        <ResponseField name="emblemHash" type="integer | null" required>
+          Bungie.net hash for the equipped emblem
+        </ResponseField>
+        <ResponseField name="completed" type="boolean" required>
+          Whether this character completed the activity
+        </ResponseField>
+        <ResponseField name="timePlayedSeconds" type="integer" required>
+          Time played on this character (seconds)
+        </ResponseField>
+        <ResponseField name="startSeconds" type="integer" required>
+          When this character joined the activity (seconds from start)
+        </ResponseField>
+        <ResponseField name="score" type="integer" required>
+          Score achieved by this character
+        </ResponseField>
+        <ResponseField name="kills" type="integer" required>
+          Total kills
+        </ResponseField>
+        <ResponseField name="deaths" type="integer" required>
+          Total deaths
+        </ResponseField>
+        <ResponseField name="assists" type="integer" required>
+          Total assists
+        </ResponseField>
+        <ResponseField name="precisionKills" type="integer" required>
+          Precision/critical kills
+        </ResponseField>
+        <ResponseField name="superKills" type="integer" required>
+          Kills with Super abilities
+        </ResponseField>
+        <ResponseField name="grenadeKills" type="integer" required>
+          Kills with grenades
+        </ResponseField>
+        <ResponseField name="meleeKills" type="integer" required>
+          Kills with melee attacks
+        </ResponseField>
+        <ResponseField name="weapons" type="array" required>
+          Weapons used by this character
+          <Expandable title="weapon properties">
+            <ResponseField name="weaponHash" type="integer" required>
+              Bungie.net weapon reference hash
+            </ResponseField>
+            <ResponseField name="kills" type="integer" required>
+              Kills with this weapon
+            </ResponseField>
+            <ResponseField name="precisionKills" type="integer" required>
+              Precision kills with this weapon
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET "https://api.raidhub.io/instance/13526539362" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-03T12:00:00.000Z",
+  "success": true,
+  "response": {
+    "instanceId": "13526539362",
+    "hash": 1485585878,
+    "completed": true,
+    "flawless": false,
+    "fresh": true,
+    "playerCount": 6,
+    "skullHashes": [],
+    "score": 0,
+    "dateStarted": "2024-03-03T10:30:00.000Z",
+    "dateCompleted": "2024-03-03T11:45:00.000Z",
+    "season": 23,
+    "duration": 4500,
+    "platformType": 0,
+    "activityId": 9,
+    "versionId": 1,
+    "isDayOne": false,
+    "isContest": false,
+    "isWeekOne": false,
+    "isBlacklisted": false,
+    "leaderboardRank": 1523,
+    "metadata": {
+      "activityName": "Vault of Glass",
+      "versionName": "Standard",
+      "isRaid": true
+    },
+    "players": [
+      {
+        "playerInfo": {
+          "membershipId": "4611686018488107374",
+          "membershipType": 3,
+          "iconPath": "/common/destiny2_content/icons/93844c8b76ea80683a880479e3506980.jpg",
+          "displayName": "xx_newo_xx",
+          "bungieGlobalDisplayName": "Newo",
+          "bungieGlobalDisplayNameCode": "9010",
+          "lastSeen": "2024-03-03T11:45:00.000Z",
+          "isPrivate": false,
+          "cheatLevel": 0
+        },
+        "completed": true,
+        "isFirstClear": false,
+        "sherpas": 1,
+        "timePlayedSeconds": 4500,
+        "characters": [
+          {
+            "characterId": "2305843009504575107",
+            "classHash": 3655393761,
+            "emblemHash": 1230443376,
+            "completed": true,
+            "timePlayedSeconds": 4500,
+            "startSeconds": 0,
+            "score": 0,
+            "kills": 342,
+            "deaths": 8,
+            "assists": 156,
+            "precisionKills": 198,
+            "superKills": 45,
+            "grenadeKills": 23,
+            "meleeKills": 12,
+            "weapons": [
+              {
+                "weaponHash": 1541131350,
+                "kills": 125,
+                "precisionKills": 89
+              },
+              {
+                "weaponHash": 2926662317,
+                "kills": 98,
+                "precisionKills": 67
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="404 - InstanceNotFoundError" type="object">
+  The specified instance was not found in the RaidHub database.
+  <Expandable title="error response">
+    ```json
+    {
+      "minted": "2024-03-03T12:00:00.000Z",
+      "success": false,
+      "code": "InstanceNotFoundError",
+      "error": {
+        "instanceId": "13526539362"
+      }
+    }
+    ```
+  </Expandable>
+</ResponseField>
+
+## Notes
+
+- Response is cached for 5 minutes (300 seconds)
+- After returning the response, the API queues background jobs to update missing character data
+- The first 12 players are also queued for profile updates
+- All timestamps are in ISO 8601 format with timezone
+- BigInt values (instanceId, characterId, membershipId) are serialized as strings

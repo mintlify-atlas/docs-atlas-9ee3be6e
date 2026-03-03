@@ -1,0 +1,297 @@
+---
+title: 'Admin Reporting'
+description: 'Manage instance and player standing, including blacklisting and cheat level updates'
+---
+
+<Warning>
+  These are **administrator-only** endpoints. Require admin authentication.
+</Warning>
+
+## Overview
+
+The reporting endpoints allow administrators to:
+- View standing information for instances and players
+- Blacklist instances from leaderboards
+- Update player cheat levels
+- View flagged activities and players
+
+---
+
+## Get Instance Standing
+
+Retrieve detailed standing information for a specific instance, including flags, blacklist status, and per-player standing data.
+
+### Endpoint
+
+```
+GET /admin/reporting/standing/{instanceId}
+```
+
+### Path Parameters
+
+<ParamField path="instanceId" type="string" required>
+  The instance ID (int64 as string)
+</ParamField>
+
+### Response
+
+<ResponseField name="instanceDetails" type="object" required>
+  Basic instance information (see Instance schema in OpenAPI spec)
+</ResponseField>
+
+<ResponseField name="blacklist" type="object">
+  Blacklist information if the instance is blacklisted, otherwise `null`
+  
+  <Expandable title="properties">
+    <ResponseField name="instanceId" type="string" required>
+      The blacklisted instance ID
+    </ResponseField>
+    
+    <ResponseField name="reportSource" type="string" required>
+      Source of the report. One of: `Manual`, `CheatCheck`, `WebReport`, `BlacklistedPlayerCascade`
+    </ResponseField>
+    
+    <ResponseField name="reportId" type="integer">
+      Associated report ID if applicable
+    </ResponseField>
+    
+    <ResponseField name="cheatCheckVersion" type="string">
+      Version of cheat detection that flagged this instance
+    </ResponseField>
+    
+    <ResponseField name="reason" type="string" required>
+      Reason for blacklisting
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string" required>
+      When the blacklist entry was created (ISO 8601)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="flags" type="array" required>
+  Array of automated flags detected for this instance
+  
+  <Expandable title="items">
+    <ResponseField name="flaggedAt" type="string" required>
+      When the instance was flagged (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="cheatCheckVersion" type="string" required>
+      Version of cheat detection algorithm
+    </ResponseField>
+    
+    <ResponseField name="cheatProbability" type="number" required>
+      Estimated probability of cheating (0-1)
+    </ResponseField>
+    
+    <ResponseField name="cheatCheckBitmask" type="string" required>
+      Bitmask indicating which heuristics were triggered (int64 as string)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="players" type="array" required>
+  Array of player standing information for this instance
+  
+  <Expandable title="items">
+    <ResponseField name="playerInfo" type="object" required>
+      Player information (see PlayerInfo schema)
+    </ResponseField>
+    
+    <ResponseField name="flags" type="array" required>
+      Flags for this specific player in this instance
+    </ResponseField>
+    
+    <ResponseField name="clears" type="integer" required>
+      Total clears for this player
+    </ResponseField>
+    
+    <ResponseField name="completed" type="boolean" required>
+      Whether the player completed this instance
+    </ResponseField>
+    
+    <ResponseField name="timePlayedSeconds" type="integer" required>
+      Time played in this instance
+    </ResponseField>
+    
+    <ResponseField name="blacklistedInstances" type="array" required>
+      Other blacklisted instances this player participated in
+    </ResponseField>
+    
+    <ResponseField name="otherRecentFlags" type="array" required>
+      Other recent flags for this player
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Error Responses
+
+<ResponseField name="404" type="object">
+  Instance Not Found
+  
+  <Expandable title="properties">
+    <ResponseField name="instanceId" type="string" required>
+      The requested instance ID
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Blacklist Instance
+
+Blacklist or un-blacklist an instance from leaderboards, optionally blacklisting specific players.
+
+### Endpoint
+
+```
+PUT /admin/reporting/blacklist/{instanceId}
+```
+
+### Path Parameters
+
+<ParamField path="instanceId" type="string" required>
+  The instance ID to blacklist or un-blacklist
+</ParamField>
+
+### Request Body
+
+<ParamField body="reason" type="string" required>
+  Reason for blacklisting (minimum 1 character)
+</ParamField>
+
+<ParamField body="reportId" type="integer">
+  Associated report ID if applicable
+</ParamField>
+
+<ParamField body="removeBlacklist" type="boolean" default="false">
+  If true, removes the blacklist instead of adding it
+</ParamField>
+
+<ParamField body="players" type="array">
+  Optional array of players to blacklist with individual reasons
+  
+  <Expandable title="items">
+    <ParamField body="membershipId" type="string" required>
+      Player membership ID to blacklist
+    </ParamField>
+    
+    <ParamField body="reason" type="string" required>
+      Individual reason for blacklisting this player
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="blacklisted" type="boolean" required>
+  `true` if instance was blacklisted, `false` if blacklist was removed
+</ResponseField>
+
+### Example Request
+
+```json
+{
+  "reason": "Confirmed exploit usage",
+  "reportId": 12345,
+  "removeBlacklist": false,
+  "players": [
+    {
+      "membershipId": "4611686018488107374",
+      "reason": "Primary exploiter"
+    }
+  ]
+}
+```
+
+### Error Responses
+
+<ResponseField name="400" type="object">
+  Player Not In Instance - One or more specified players are not in this instance
+  
+  <Expandable title="properties">
+    <ResponseField name="instanceId" type="string" required>
+      The instance ID
+    </ResponseField>
+    
+    <ResponseField name="players" type="array" required>
+      Array of player IDs not found in the instance
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="404" type="object">
+  Instance Not Found
+</ResponseField>
+
+---
+
+## Update Player
+
+Update player fields, currently supporting cheat level modifications.
+
+### Endpoint
+
+```
+PATCH /admin/reporting/player/{membershipId}
+```
+
+### Path Parameters
+
+<ParamField path="membershipId" type="string" required>
+  The player's membership ID (int64 as string)
+</ParamField>
+
+### Request Body
+
+<ParamField body="cheatLevel" type="integer">
+  New cheat level for the player. One of:
+  - `0`: None
+  - `1`: Suspicious
+  - `2`: Moderate
+  - `3`: Extreme
+  - `4`: Blacklisted
+</ParamField>
+
+### Response
+
+Returns a success message string:
+
+```json
+{
+  "minted": "2024-03-03T23:30:00.000Z",
+  "success": true,
+  "response": "Player 'Newo#9010' updated successfully."
+}
+```
+
+### Error Responses
+
+<ResponseField name="404" type="object">
+  Player Not Found
+  
+  <Expandable title="properties">
+    <ResponseField name="membershipId" type="string" required>
+      The requested membership ID
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Authentication
+
+All reporting endpoints require admin JWT token:
+
+```bash
+curl -X GET https://api.raidhub.io/admin/reporting/standing/12345678901234567 \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+## Common Use Cases
+
+- **Investigate Reports**: Review flagged instances and player behavior
+- **Moderate Leaderboards**: Remove illegitimate clears from rankings
+- **Track Cheaters**: Monitor players with suspicious activity patterns
+- **Manual Review**: Override automated systems when necessary

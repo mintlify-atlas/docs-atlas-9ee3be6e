@@ -1,0 +1,90 @@
+---
+title: "Introduction"
+description: "Comprehensive API for Destiny 2 raid statistics, leaderboards, and player data"
+---
+
+## What is RaidHub API?
+
+RaidHub API is a powerful RESTful API that provides access to comprehensive Destiny 2 raid statistics, leaderboards, and player performance data. Built for developers who want to integrate raid analytics into their applications, websites, or tools.
+
+Our API aggregates and processes data from millions of raid completions, providing:
+
+- Detailed player raid statistics and history
+- Global and raid-specific leaderboards
+- Real-time instance and PGCR (Post-Game Carnage Report) data
+- Clan raid statistics
+- Weapon usage metrics and population analytics
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Player Statistics"
+    icon="user"
+    href="/guides/player-data"
+  >
+    Access comprehensive raid stats, completion history, and teammate information for any Destiny 2 player.
+  </Card>
+  <Card
+    title="Leaderboards"
+    icon="trophy"
+    href="/guides/leaderboards"
+  >
+    Query global, raid-specific, and clan leaderboards with flexible filtering and pagination.
+  </Card>
+  <Card
+    title="Instance Data"
+    icon="clock"
+    href="/guides/instance-data"
+  >
+    Retrieve detailed information about specific raid completions, including time, loadouts, and performance.
+  </Card>
+  <Card
+    title="Real-time Status"
+    icon="chart-line"
+    href="/api/status"
+  >
+    Monitor the health of our data ingestion pipeline and see how current the data is.
+  </Card>
+</CardGroup>
+
+## API Endpoint
+
+All API requests should be made to:
+
+```
+https://api.raidhub.io
+```
+
+<Note>
+  The API requires an API key for production use. Development requests (from localhost) do not require authentication.
+</Note>
+
+## Getting Started
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Make your first API call in minutes.
+  </Card>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/authentication"
+  >
+    Learn how to authenticate your requests.
+  </Card>
+</CardGroup>
+
+## Need Help?
+
+<Card
+  title="View on GitHub"
+  icon="github"
+  href="https://github.com/Raid-Hub/API"
+>
+  Check out the source code, report issues, or contribute to the project.
+</Card>

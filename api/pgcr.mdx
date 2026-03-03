@@ -1,0 +1,363 @@
+---
+title: "Get PGCR"
+description: "Retrieve raw Post Game Carnage Report data from the Bungie API"
+---
+
+## Endpoint
+
+<ParamField path="instanceId" type="string" required>
+  The unique identifier for the activity instance. This is a 64-bit integer represented as a string.
+</ParamField>
+
+```bash
+GET /pgcr/{instanceId}
+```
+
+## Description
+
+Get a raw post game carnage report by instanceId. This is essentially the raw data from the Bungie API, with a few redundant fields trimmed off. It should be a subset of the data returned by the Bungie API.
+
+This endpoint is useful if you need to access PGCRs when Bungie's API is down, or if you need the raw Bungie data format instead of RaidHub's normalized format.
+
+<Tip>
+  For a more structured response with RaidHub-specific enhancements, use the `/instance/{instanceId}` endpoint instead.
+</Tip>
+
+## Response
+
+The response follows Bungie's DestinyPostGameCarnageReportData schema with some fields removed.
+
+<ResponseField name="period" type="string" required>
+  ISO 8601 timestamp when the activity occurred
+</ResponseField>
+
+<ResponseField name="startingPhaseIndex" type="integer" optional>
+  The phase index where the activity started (for activities with checkpoints)
+</ResponseField>
+
+<ResponseField name="activityWasStartedFromBeginning" type="boolean" optional>
+  Whether the activity was started from the beginning or from a checkpoint
+</ResponseField>
+
+<ResponseField name="activityDetails" type="object" required>
+  Core activity information from Bungie
+  <Expandable title="activityDetails properties">
+    <ResponseField name="directorActivityHash" type="integer" required>
+      The Bungie.net activity definition hash (uint32)
+    </ResponseField>
+    <ResponseField name="instanceId" type="string" required>
+      The unique instance identifier (64-bit integer as string)
+    </ResponseField>
+    <ResponseField name="mode" type="integer" required>
+      Primary activity mode (DestinyActivityModeType enum)
+    </ResponseField>
+    <ResponseField name="modes" type="array" required>
+      All applicable activity modes for this instance
+    </ResponseField>
+    <ResponseField name="membershipType" type="integer" required>
+      Platform membership type (1=Xbox, 2=PSN, 3=Steam, etc.)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="activityDifficultyTier" type="integer" optional>
+  The difficulty tier of the activity (if applicable)
+</ResponseField>
+
+<ResponseField name="selectedSkullHashes" type="array" optional>
+  Array of modifier hashes that were active during the activity
+</ResponseField>
+
+<ResponseField name="entries" type="array" required>
+  Array of player entries with detailed statistics
+  <Expandable title="entry properties">
+    <ResponseField name="player" type="object" required>
+      Player and character information
+      <Expandable title="player properties">
+        <ResponseField name="destinyUserInfo" type="object" required>
+          Destiny user identification
+          <Expandable title="destinyUserInfo properties">
+            <ResponseField name="iconPath" type="string | null" optional>
+              Path to player's icon image
+            </ResponseField>
+            <ResponseField name="crossSaveOverride" type="integer" required>
+              Platform type for cross-save override
+            </ResponseField>
+            <ResponseField name="applicableMembershipTypes" type="array | null" optional>
+              Array of membership types associated with this user
+            </ResponseField>
+            <ResponseField name="membershipType" type="integer | null" optional>
+              Primary membership type
+            </ResponseField>
+            <ResponseField name="membershipId" type="string" required>
+              Destiny membership ID (64-bit integer as string)
+            </ResponseField>
+            <ResponseField name="displayName" type="string | null" optional>
+              Platform-specific display name (legacy)
+            </ResponseField>
+            <ResponseField name="bungieGlobalDisplayName" type="string | null" optional>
+              Bungie global display name
+            </ResponseField>
+            <ResponseField name="bungieGlobalDisplayNameCode" type="integer | null" optional>
+              Bungie global display name code
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="characterClass" type="string | null" optional>
+          Character class name (e.g., "Titan", "Hunter", "Warlock")
+        </ResponseField>
+        <ResponseField name="classHash" type="integer" required>
+          Bungie.net class definition hash
+        </ResponseField>
+        <ResponseField name="raceHash" type="integer" required>
+          Bungie.net race definition hash
+        </ResponseField>
+        <ResponseField name="genderHash" type="integer" required>
+          Bungie.net gender definition hash
+        </ResponseField>
+        <ResponseField name="characterLevel" type="integer" required>
+          Character level (50 for level-capped characters)
+        </ResponseField>
+        <ResponseField name="lightLevel" type="integer" required>
+          Character power/light level
+        </ResponseField>
+        <ResponseField name="emblemHash" type="integer" required>
+          Bungie.net emblem definition hash
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="characterId" type="string" required>
+      Character ID (64-bit integer as string)
+    </ResponseField>
+    <ResponseField name="values" type="object" required>
+      Dictionary of stat keys to stat value pairs. Common stats include:
+      - `assists`: Assists count
+      - `kills`: Total kills
+      - `deaths`: Total deaths
+      - `opponentsDefeated`: Total opponents defeated
+      - `completionReason`: How the activity ended
+      - `startSeconds`: Seconds from start when player joined
+      - `timePlayedSeconds`: Total time played
+      - `playerCount`: Number of players in activity
+      - `teamScore`: Team score (if applicable)
+      - `precisionKills`: Precision/critical kills
+      - `weaponKillsGrenade`: Grenade kills
+      - `weaponKillsMelee`: Melee kills
+      - `weaponKillsSuper`: Super ability kills
+      
+      Each stat has a `basic` object with `value` (number) and `displayValue` (formatted string).
+    </ResponseField>
+    <ResponseField name="extended" type="object" optional>
+      Extended statistics including weapon details
+      <Expandable title="extended properties">
+        <ResponseField name="weapons" type="array | null" optional>
+          Array of weapons used during the activity
+          <Expandable title="weapon properties">
+            <ResponseField name="referenceId" type="integer" required>
+              Bungie.net weapon definition hash
+            </ResponseField>
+            <ResponseField name="values" type="object" required>
+              Dictionary of weapon-specific stats (kills, precision kills, etc.) in the same format as player values
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="values" type="object" required>
+          Additional extended statistics in the same format as entry values
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET "https://api.raidhub.io/pgcr/13526539362" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2024-03-03T12:00:00.000Z",
+  "success": true,
+  "response": {
+    "period": "2024-03-03T10:30:00.000Z",
+    "startingPhaseIndex": 0,
+    "activityWasStartedFromBeginning": true,
+    "activityDetails": {
+      "directorActivityHash": 1485585878,
+      "instanceId": "13526539362",
+      "mode": 4,
+      "modes": [4, 7],
+      "membershipType": 3
+    },
+    "activityDifficultyTier": 0,
+    "selectedSkullHashes": [],
+    "entries": [
+      {
+        "player": {
+          "destinyUserInfo": {
+            "iconPath": "/common/destiny2_content/icons/93844c8b76ea80683a880479e3506980.jpg",
+            "crossSaveOverride": 0,
+            "applicableMembershipTypes": [3],
+            "membershipType": 3,
+            "membershipId": "4611686018488107374",
+            "displayName": "xx_newo_xx",
+            "bungieGlobalDisplayName": "Newo",
+            "bungieGlobalDisplayNameCode": 9010
+          },
+          "characterClass": "Titan",
+          "classHash": 3655393761,
+          "raceHash": 3887404748,
+          "genderHash": 3111576190,
+          "characterLevel": 50,
+          "lightLevel": 1810,
+          "emblemHash": 1230443376
+        },
+        "characterId": "2305843009504575107",
+        "values": {
+          "assists": {
+            "basic": {
+              "value": 156,
+              "displayValue": "156"
+            }
+          },
+          "kills": {
+            "basic": {
+              "value": 342,
+              "displayValue": "342"
+            }
+          },
+          "deaths": {
+            "basic": {
+              "value": 8,
+              "displayValue": "8"
+            }
+          },
+          "opponentsDefeated": {
+            "basic": {
+              "value": 498,
+              "displayValue": "498"
+            }
+          },
+          "completionReason": {
+            "basic": {
+              "value": 0,
+              "displayValue": "Objective Completed"
+            }
+          },
+          "startSeconds": {
+            "basic": {
+              "value": 0,
+              "displayValue": "0s"
+            }
+          },
+          "timePlayedSeconds": {
+            "basic": {
+              "value": 4500,
+              "displayValue": "1h 15m 0s"
+            }
+          },
+          "precisionKills": {
+            "basic": {
+              "value": 198,
+              "displayValue": "198"
+            }
+          },
+          "weaponKillsGrenade": {
+            "basic": {
+              "value": 23,
+              "displayValue": "23"
+            }
+          },
+          "weaponKillsMelee": {
+            "basic": {
+              "value": 12,
+              "displayValue": "12"
+            }
+          },
+          "weaponKillsSuper": {
+            "basic": {
+              "value": 45,
+              "displayValue": "45"
+            }
+          }
+        },
+        "extended": {
+          "weapons": [
+            {
+              "referenceId": 1541131350,
+              "values": {
+                "uniqueWeaponKills": {
+                  "basic": {
+                    "value": 125,
+                    "displayValue": "125"
+                  }
+                },
+                "uniqueWeaponPrecisionKills": {
+                  "basic": {
+                    "value": 89,
+                    "displayValue": "89"
+                  }
+                }
+              }
+            },
+            {
+              "referenceId": 2926662317,
+              "values": {
+                "uniqueWeaponKills": {
+                  "basic": {
+                    "value": 98,
+                    "displayValue": "98"
+                  }
+                },
+                "uniqueWeaponPrecisionKills": {
+                  "basic": {
+                    "value": 67,
+                    "displayValue": "67"
+                  }
+                }
+              }
+            }
+          ],
+          "values": {}
+        }
+      }
+    ]
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="404 - PGCRNotFoundError" type="object">
+  The specified PGCR was not found in the RaidHub database.
+  <Expandable title="error response">
+    ```json
+    {
+      "minted": "2024-03-03T12:00:00.000Z",
+      "success": false,
+      "code": "PGCRNotFoundError",
+      "error": {
+        "instanceId": "13526539362"
+      }
+    }
+    ```
+  </Expandable>
+</ResponseField>
+
+## Notes
+
+- Response is cached for 24 hours (86400 seconds)
+- PGCRs are stored compressed (gzip) in the database and decompressed on request
+- BigInt values (instanceId, characterId, membershipId) are converted from strings to BigInt internally, then serialized back to strings in the response
+- The `period` field is converted to a JavaScript Date object and serialized as an ISO 8601 string
+- Some fields from the original Bungie API response are trimmed to reduce payload size
+- This endpoint provides access to historical data even when Bungie's servers are experiencing issues
+
+## Related Endpoints
+
+- `/instance/{instanceId}` - Get normalized instance data with RaidHub enhancements
+- See [Bungie.net API Documentation](https://bungie-net.github.io/multi/schema_Destiny-HistoricalStats-DestinyPostGameCarnageReportData.html) for the original schema

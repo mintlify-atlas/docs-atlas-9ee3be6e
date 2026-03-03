@@ -1,0 +1,311 @@
+---
+title: "Get Player Profile"
+api: "GET /player/{membershipId}/profile"
+description: "Get a player's complete profile including global stats, activity stats, and world first entries"
+---
+
+Get a player's profile information used to hydrate the RaidHub profile page. This includes global statistics, per-activity statistics, and world first entries.
+
+<Warning>
+  This endpoint requires authentication if the player has a private profile.
+</Warning>
+
+## Path Parameters
+
+<ParamField path="membershipId" type="string" required>
+  The Destiny membership ID of the player (int64 format).
+</ParamField>
+
+## Response
+
+<ResponseField name="playerInfo" type="object">
+  Basic information about the player.
+  
+  <Expandable title="PlayerInfo">
+    <ResponseField name="membershipId" type="string">
+      Destiny membership ID.
+    </ResponseField>
+    
+    <ResponseField name="bungieGlobalDisplayName" type="string" nullable>
+      Bungie global display name.
+    </ResponseField>
+    
+    <ResponseField name="bungieGlobalDisplayNameCode" type="string" nullable>
+      Bungie name code.
+    </ResponseField>
+    
+    <ResponseField name="membershipType" type="integer" nullable>
+      Platform the account was created on.
+    </ResponseField>
+    
+    <ResponseField name="iconPath" type="string" nullable>
+      Player icon path.
+    </ResponseField>
+    
+    <ResponseField name="lastSeen" type="string">
+      Last seen timestamp.
+    </ResponseField>
+    
+    <ResponseField name="isPrivate" type="boolean">
+      Whether the profile is private.
+    </ResponseField>
+    
+    <ResponseField name="cheatLevel" type="integer">
+      Cheat detection level (0-4).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+  Player statistics.
+  
+  <Expandable title="stats">
+    <ResponseField name="global" type="object">
+      Global statistics across all raids.
+      
+      <Expandable title="global">
+        <ResponseField name="clears" type="object">
+          Total raid clears with rank and percentile.
+          
+          <Expandable title="GlobalStat">
+            <ResponseField name="value" type="number">
+              The stat value.
+            </ResponseField>
+            
+            <ResponseField name="rank" type="integer" nullable>
+              Leaderboard rank (null if not ranked).
+            </ResponseField>
+            
+            <ResponseField name="percentile" type="number" nullable>
+              Percentile rank from 0.0 to 1.0 (null if not ranked).
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        
+        <ResponseField name="freshClears" type="object">
+          Fresh (full) raid clears with rank and percentile.
+        </ResponseField>
+        
+        <ResponseField name="sherpas" type="object">
+          Number of first-timers helped with rank and percentile.
+        </ResponseField>
+        
+        <ResponseField name="totalTimePlayed" type="object">
+          Total time played in raids (seconds) with rank and percentile.
+        </ResponseField>
+        
+        <ResponseField name="contest" type="object">
+          Contest mode score with rank and percentile.
+        </ResponseField>
+        
+        <ResponseField name="sumOfBest" type="object">
+          Sum of best times across all raids with rank and percentile.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="activity" type="object">
+      Per-activity statistics, keyed by activityId.
+      
+      <Expandable title="activity">
+        <ResponseField name="{activityId}" type="object">
+          Statistics for a specific raid activity.
+          
+          <Expandable title="PlayerProfileActivityStats">
+            <ResponseField name="activityId" type="integer">
+              The RaidHub activity ID.
+            </ResponseField>
+            
+            <ResponseField name="freshClears" type="integer">
+              Number of fresh clears.
+            </ResponseField>
+            
+            <ResponseField name="clears" type="integer">
+              Total number of clears (fresh + checkpoint).
+            </ResponseField>
+            
+            <ResponseField name="sherpas" type="integer">
+              Number of first-timers helped.
+            </ResponseField>
+            
+            <ResponseField name="fastestInstance" type="object" nullable>
+              The player's fastest completion of this activity (Instance object).
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="worldFirstEntries" type="object">
+  World first rankings, keyed by activityId. Value is null if player didn't complete during contest/day one.
+  
+  <Expandable title="worldFirstEntries">
+    <ResponseField name="{activityId}" type="object" nullable>
+      World first entry for a specific raid.
+      
+      <Expandable title="WorldFirstEntry">
+        <ResponseField name="activityId" type="integer">
+          The RaidHub activity ID.
+        </ResponseField>
+        
+        <ResponseField name="instanceId" type="string">
+          The instance ID of the completion.
+        </ResponseField>
+        
+        <ResponseField name="timeAfterLaunch" type="integer">
+          Seconds after raid launch when completed.
+        </ResponseField>
+        
+        <ResponseField name="rank" type="integer">
+          World first ranking position.
+        </ResponseField>
+        
+        <ResponseField name="isDayOne" type="boolean">
+          Completed during day one period.
+        </ResponseField>
+        
+        <ResponseField name="isContest" type="boolean">
+          Completed during contest mode period.
+        </ResponseField>
+        
+        <ResponseField name="isWeekOne" type="boolean">
+          Completed during week one period.
+        </ResponseField>
+        
+        <ResponseField name="isChallengeMode" type="boolean">
+          Was in challenge mode.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET "https://api.raidhub.io/player/4611686018488107374/profile" \
+  -H "X-API-Key: your_api_key_here"
+```
+
+## Example Response
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": true,
+  "response": {
+    "playerInfo": {
+      "membershipId": "4611686018488107374",
+      "membershipType": 3,
+      "iconPath": "/common/destiny2_content/icons/93844c8b76ea80683a880479e3506980.jpg",
+      "displayName": "xx_newo_xx",
+      "bungieGlobalDisplayName": "Newo",
+      "bungieGlobalDisplayNameCode": "9010",
+      "lastSeen": "2021-05-01T00:00:00.000Z",
+      "isPrivate": false,
+      "cheatLevel": 0
+    },
+    "stats": {
+      "global": {
+        "clears": {
+          "value": 450,
+          "rank": 1250,
+          "percentile": 0.95
+        },
+        "freshClears": {
+          "value": 320,
+          "rank": 1100,
+          "percentile": 0.93
+        },
+        "sherpas": {
+          "value": 45,
+          "rank": 5000,
+          "percentile": 0.85
+        },
+        "totalTimePlayed": {
+          "value": 540000,
+          "rank": 2000,
+          "percentile": 0.90
+        },
+        "contest": {
+          "value": 1500.5,
+          "rank": 500,
+          "percentile": 0.98
+        },
+        "sumOfBest": {
+          "value": 25000,
+          "rank": 750,
+          "percentile": 0.96
+        }
+      },
+      "activity": {
+        "9": {
+          "activityId": 9,
+          "freshClears": 25,
+          "clears": 40,
+          "sherpas": 5,
+          "fastestInstance": null
+        }
+      }
+    },
+    "worldFirstEntries": {
+      "9": null,
+      "12": {
+        "activityId": 12,
+        "instanceId": "12345678901234567",
+        "timeAfterLaunch": 28800,
+        "rank": 450,
+        "isDayOne": true,
+        "isContest": true,
+        "isWeekOne": true,
+        "isChallengeMode": false
+      }
+    }
+  }
+}
+```
+
+## Error Responses
+
+### PlayerNotFoundError (404)
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerNotFoundError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+### PlayerPrivateProfileError (403)
+
+Returned when the player has a private profile and you don't have authorization.
+
+```json
+{
+  "minted": "2026-03-03T12:34:56.789Z",
+  "success": false,
+  "code": "PlayerPrivateProfileError",
+  "error": {
+    "membershipId": "4611686018488107374"
+  }
+}
+```
+
+## Use Cases
+
+- **Profile pages**: Display comprehensive player statistics
+- **Leaderboard positioning**: Show where a player ranks globally
+- **Achievement tracking**: Display world first completions
+- **Progress tracking**: Monitor player improvement over time
+
+## Performance Notes
+
+- Cached for 30 seconds
+- Triggers asynchronous player data refresh
+- Returns 403 for private profiles without proper authentication
