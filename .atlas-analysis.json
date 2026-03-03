@@ -1,0 +1,106 @@
+{
+  "projectType": "api-service",
+  "projectName": "RaidHub API",
+  "projectDescription": "Semi-public REST API for Destiny 2 raid statistics, leaderboards, and player analytics",
+  "theme": "sequoia",
+  "primaryColor": "#FF6B35",
+  "lightColor": "#FFB84D",
+  "darkColor": "#D94A1C",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "authentication"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": ["concepts/rate-limits", "concepts/response-format", "concepts/error-handling"]
+          },
+          {
+            "group": "Guides",
+            "pages": ["guides/player-data", "guides/leaderboards", "guides/instance-data"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Manifest",
+            "pages": ["api/manifest"]
+          },
+          {
+            "group": "Player",
+            "pages": ["api/player/search", "api/player/basic", "api/player/profile", "api/player/history", "api/player/teammates", "api/player/instances"]
+          },
+          {
+            "group": "Instance & PGCR",
+            "pages": ["api/instance", "api/pgcr"]
+          },
+          {
+            "group": "Leaderboards",
+            "pages": ["api/leaderboard/individual-global", "api/leaderboard/individual-raid", "api/leaderboard/individual-pantheon", "api/leaderboard/team-first", "api/leaderboard/team-contest", "api/leaderboard/clan"]
+          },
+          {
+            "group": "Clans",
+            "pages": ["api/clan"]
+          },
+          {
+            "group": "Metrics",
+            "pages": ["api/metrics/weapons", "api/metrics/population"]
+          },
+          {
+            "group": "Status",
+            "pages": ["api/status"]
+          },
+          {
+            "group": "Admin",
+            "pages": ["api/admin/query", "api/admin/reporting"]
+          },
+          {
+            "group": "Authorization",
+            "pages": ["api/authorize/admin", "api/authorize/user"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Player search and statistics",
+    "Global and raid-specific leaderboards",
+    "Instance and PGCR data retrieval",
+    "Clan analytics",
+    "Weapon and population metrics",
+    "Admin query interface"
+  ],
+  "publicApiSurface": [
+    "GET /manifest",
+    "GET /status",
+    "GET /player/search",
+    "GET /player/{membershipId}/basic",
+    "GET /player/{membershipId}/profile",
+    "GET /player/{membershipId}/history",
+    "GET /player/{membershipId}/teammates",
+    "GET /player/{membershipId}/instances",
+    "GET /instance/{instanceId}",
+    "GET /pgcr/{instanceId}",
+    "GET /leaderboard/individual/global/{category}",
+    "GET /leaderboard/individual/raid/{raid}/{category}",
+    "GET /leaderboard/individual/pantheon/{version}/{category}",
+    "GET /leaderboard/team/first/{activity}/{version}",
+    "GET /leaderboard/team/contest/{raid}",
+    "GET /leaderboard/clan",
+    "GET /clan/{groupId}",
+    "GET /metrics/weapons/rolling-week",
+    "GET /metrics/population/rolling-day",
+    "POST /admin/query",
+    "POST /admin/reporting/standing/{instanceId}",
+    "POST /admin/reporting/blacklist/{instanceId}",
+    "POST /admin/reporting/player/{membershipId}",
+    "POST /authorize/admin",
+    "POST /authorize/user"
+  ]
+}
